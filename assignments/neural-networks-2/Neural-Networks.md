@@ -1,6 +1,6 @@
 # 2 - Neural Networks
 
-In this task you are suppose to implement 2 types of mulilayer Perceptrons: 
+In this task you are supposed to implement 2 types of mulilayer Perceptrons: 
 1. Using only Python. 
 2. Using a high level library
 

@@ -1,6 +1,6 @@
 # 5 - Object Detection
 
-In this task you are suppose to implement a more advanced convolutional net using the same dataset as last week. 
+In this task you are supposed to implement a more advanced convolutional net using the same dataset as last week. 
 The new network should contain one or more of the following:
 
 - Download the balloons dataset https://github.com/matterport/Mask_RCNN/releases 

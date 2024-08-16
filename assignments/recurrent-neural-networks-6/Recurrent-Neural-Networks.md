@@ -1,6 +1,6 @@
 # 6 - Recurrent Neural Networks
 
-In this task you are suppose to implement a chatbot in two ways: 
+In this task you are supposed to implement a chatbot in two ways: 
 1. As a classifier 
 2. As generator
 
