@@ -25,6 +25,10 @@ def distance(p1, p2):
     return np.linalg.norm(p1 - p2)
 
 
+def indicator_function(x, y):
+    return 1 if x == y else 0
+
+
 def get_neighbours(X_train, Y_train, x, k):
     distances = []
 
