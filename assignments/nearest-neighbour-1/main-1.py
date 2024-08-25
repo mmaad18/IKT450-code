@@ -1,5 +1,6 @@
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 from assignments.utils import display_info
 
@@ -51,6 +52,23 @@ def classify(X_train, Y_train, x0, K):
 * MSE: Mean Square Error
 * RMSE: Root Mean Square Error
 '''
+def confusion_matrix(Y_val, Y_pred):
+    TP = 0
+    TN = 0
+    FP = 0
+    FN = 0
+
+    for i in range(len(Y_val)):
+        if Y_val[i] == 1 and Y_pred[i] == 1:
+            TP += 1
+        elif Y_val[i] == 0 and Y_pred[i] == 0:
+            TN += 1
+        elif Y_val[i] == 0 and Y_pred[i] == 1:
+            FP += 1
+        elif Y_val[i] == 1 and Y_pred[i] == 0:
+            FN += 1
+
+    return TP, TN, FP, FN
 
 
 def precision(TP, FP):
@@ -77,44 +95,7 @@ def root_mean_square_error(Y_true, Y_pred):
     return np.sqrt(mean_square_error(Y_true, Y_pred))
 
 
-def evaluation(Y_val, Y_pred):
-    TP = 0
-    TN = 0
-    FP = 0
-    FN = 0
-
-    for i in range(len(Y_val)):
-        if Y_val[i] == 1 and Y_pred[i] == 1:
-            TP += 1
-        elif Y_val[i] == 0 and Y_pred[i] == 0:
-            TN += 1
-        elif Y_val[i] == 0 and Y_pred[i] == 1:
-            FP += 1
-        elif Y_val[i] == 1 and Y_pred[i] == 0:
-            FN += 1
-
-    precision_score = precision(TP, FP)
-    recall_score = recall(TP, FN)
-    f1_score_value = f1_score(precision_score, recall_score)
-    accuracy_score = accuracy(TP, TN, FP, FN)
-    mse = mean_square_error(Y_val, Y_pred)
-    rmse = root_mean_square_error(Y_val, Y_pred)
-
-    print("Precision: ", precision_score)
-    print("Recall: ", recall_score)
-    print("F1 Score: ", f1_score_value)
-    print("Accuracy: ", accuracy_score)
-    print("Mean Square Error: ", mse)
-    print("Root Mean Square Error: ", rmse)
-
-
-def main():
-    display_info(1)
-
-    X_train, X_val, Y_train, Y_val, dataset = load_data("assignments/nearest-neighbour-1/pima-indians-diabetes.csv")
-
-    K = 50
-
+def evaluate_K(X_train, X_val, Y_train, Y_val, K):
     Y_pred = []
 
     for i in range(len(X_val)):
@@ -122,7 +103,42 @@ def main():
         y_pred = classify(X_train, Y_train, x0, K)
         Y_pred.append(y_pred)
 
-    evaluation(Y_val, Y_pred)
+    TP, TN, FP, FN = confusion_matrix(Y_val, Y_pred)
+
+    precision_score = precision(TP, FP)
+    recall_score = recall(TP, FN)
+    f1_score_value = f1_score(precision_score, recall_score)
+    accuracy_score = accuracy(TP, TN, FP, FN)
+    MSE = mean_square_error(Y_val, Y_pred)
+    RMSE = root_mean_square_error(Y_val, Y_pred)
+
+    return np.array([TP, TN, FP, FN, precision_score, recall_score, f1_score_value, accuracy_score, MSE, RMSE])
+
+
+def main():
+    display_info(1)
+
+    X_train, X_val, Y_train, Y_val, dataset = load_data("assignments/nearest-neighbour-1/pima-indians-diabetes.csv")
+
+    K_evaluation_size = 100
+
+    evaluation = np.zeros((K_evaluation_size, 10))
+
+    for K in range(1, K_evaluation_size+1):
+        evaluation[K-1] = evaluate_K(X_train, X_val, Y_train, Y_val, K)
+
+    plt.plot(range(1, K_evaluation_size+1), evaluation[:, 0], label="TP")
+    plt.plot(range(1, K_evaluation_size+1), evaluation[:, 1], label="TN")
+    plt.plot(range(1, K_evaluation_size+1), evaluation[:, 2], label="FP")
+    plt.plot(range(1, K_evaluation_size+1), evaluation[:, 3], label="FN")
+    plt.plot(range(1, K_evaluation_size+1), evaluation[:, 4], label="Precision")
+    plt.plot(range(1, K_evaluation_size+1), evaluation[:, 5], label="Recall")
+    plt.plot(range(1, K_evaluation_size+1), evaluation[:, 6], label="F1 Score")
+    plt.plot(range(1, K_evaluation_size+1), evaluation[:, 7], label="Accuracy")
+    plt.plot(range(1, K_evaluation_size+1), evaluation[:, 8], label="MSE")
+    plt.plot(range(1, K_evaluation_size+1), evaluation[:, 9], label="RMSE")
+    plt.legend()
+    plt.show()
 
 
 main()
