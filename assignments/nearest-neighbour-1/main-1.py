@@ -8,11 +8,11 @@ from assignments.utils import display_info
 def load_data(file_path: str, split_ratio: float = 0.8):
     np.random.seed(7)
 
-    # load pima indians dataset
+    # Load pima indians dataset
     dataset = np.loadtxt(file_path, delimiter=",")
     np.random.shuffle(dataset)
 
-    # split into input (X) and output (Y) variables
+    # Split into input (X) and output (Y) variables
     index = int(len(dataset) * split_ratio)
     X_train = dataset[:index, 0:8]
     X_val = dataset[index:, 0:8]
@@ -115,30 +115,61 @@ def evaluate_K(X_train, X_val, Y_train, Y_val, K):
     return np.array([TP, TN, FP, FN, precision_score, recall_score, f1_score_value, accuracy_score, MSE, RMSE])
 
 
+def plot_evaluation(evaluation, K_evaluation_size):
+    fig, axs = plt.subplots(3, 1, figsize=(10, 15))
+
+    # Plot TP, TN, FP, FN
+    axs[0].plot(range(1, K_evaluation_size + 1), evaluation[:, 1], label="TN")
+    axs[0].plot(range(1, K_evaluation_size + 1), evaluation[:, 0], label="TP")
+    axs[0].plot(range(1, K_evaluation_size + 1), evaluation[:, 3], label="FN")
+    axs[0].plot(range(1, K_evaluation_size + 1), evaluation[:, 2], label="FP")
+    axs[0].set_title('Confusion Matrix Components')
+    axs[0].set_xlabel('K')
+    axs[0].set_ylabel('Count')
+    axs[0].legend()
+    axs[0].grid(True)
+
+    # Plot Precision, Recall, F1 Score, Accuracy
+    axs[1].plot(range(1, K_evaluation_size + 1), evaluation[:, 7], label="Accuracy")
+    axs[1].plot(range(1, K_evaluation_size + 1), evaluation[:, 4], label="Precision")
+    axs[1].plot(range(1, K_evaluation_size + 1), evaluation[:, 6], label="F1 Score")
+    axs[1].plot(range(1, K_evaluation_size + 1), evaluation[:, 5], label="Recall")
+    axs[1].set_title('Performance Metrics')
+    axs[1].set_xlabel('K')
+    axs[1].set_ylabel('Score')
+    axs[1].legend()
+    axs[1].grid(True)
+
+    # Plot MSE and RMSE
+    axs[2].plot(range(1, K_evaluation_size + 1), evaluation[:, 9], label="RMSE")
+    axs[2].plot(range(1, K_evaluation_size + 1), evaluation[:, 8], label="MSE")
+    axs[2].set_title('Error Metrics')
+    axs[2].set_xlabel('K')
+    axs[2].set_ylabel('Error')
+    axs[2].legend()
+    axs[2].grid(True)
+
+    plt.tight_layout()
+    plt.show()
+
+
 def main():
     display_info(1)
 
     X_train, X_val, Y_train, Y_val, dataset = load_data("assignments/nearest-neighbour-1/pima-indians-diabetes.csv")
 
-    K_evaluation_size = 100
+    K_evaluation_size = 150
+
+    if K_evaluation_size > len(X_val):
+        print("ERROR: K Evaluation size is greater than the size of the validation set")
+        return
 
     evaluation = np.zeros((K_evaluation_size, 10))
 
     for K in range(1, K_evaluation_size+1):
         evaluation[K-1] = evaluate_K(X_train, X_val, Y_train, Y_val, K)
 
-    plt.plot(range(1, K_evaluation_size+1), evaluation[:, 0], label="TP")
-    plt.plot(range(1, K_evaluation_size+1), evaluation[:, 1], label="TN")
-    plt.plot(range(1, K_evaluation_size+1), evaluation[:, 2], label="FP")
-    plt.plot(range(1, K_evaluation_size+1), evaluation[:, 3], label="FN")
-    plt.plot(range(1, K_evaluation_size+1), evaluation[:, 4], label="Precision")
-    plt.plot(range(1, K_evaluation_size+1), evaluation[:, 5], label="Recall")
-    plt.plot(range(1, K_evaluation_size+1), evaluation[:, 6], label="F1 Score")
-    plt.plot(range(1, K_evaluation_size+1), evaluation[:, 7], label="Accuracy")
-    plt.plot(range(1, K_evaluation_size+1), evaluation[:, 8], label="MSE")
-    plt.plot(range(1, K_evaluation_size+1), evaluation[:, 9], label="RMSE")
-    plt.legend()
-    plt.show()
+    plot_evaluation(evaluation, K_evaluation_size)
 
 
 main()
