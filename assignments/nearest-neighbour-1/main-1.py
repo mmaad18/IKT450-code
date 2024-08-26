@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 from assignments.utils import display_info
 
 
-def load_data(file_path: str, split_ratio: float = 0.8):
-    np.random.seed(7)
+def load_data(file_path: str, seed: int = 7, split_ratio: float = 0.8):
+    np.random.seed(seed)
 
     # Load pima indians dataset
     dataset = np.loadtxt(file_path, delimiter=",")
@@ -123,10 +123,11 @@ def plot_evaluation(evaluation, K_evaluation_size):
     axs[0].plot(range(1, K_evaluation_size + 1), evaluation[:, 0], label="TP")
     axs[0].plot(range(1, K_evaluation_size + 1), evaluation[:, 3], label="FN")
     axs[0].plot(range(1, K_evaluation_size + 1), evaluation[:, 2], label="FP")
-    axs[0].set_title('Confusion Matrix Components')
-    axs[0].set_xlabel('K')
-    axs[0].set_ylabel('Count')
-    axs[0].legend()
+    axs[0].set_title('Confusion Matrix Components', fontsize=20)
+    axs[0].set_xlabel('K', fontsize=16)
+    axs[0].set_ylabel('Count', fontsize=16)
+    axs[0].legend(fontsize=16)
+    axs[0].tick_params(labelsize=16)
     axs[0].grid(True)
 
     # Plot Precision, Recall, F1 Score, Accuracy
@@ -134,19 +135,21 @@ def plot_evaluation(evaluation, K_evaluation_size):
     axs[1].plot(range(1, K_evaluation_size + 1), evaluation[:, 4], label="Precision")
     axs[1].plot(range(1, K_evaluation_size + 1), evaluation[:, 6], label="F1 Score")
     axs[1].plot(range(1, K_evaluation_size + 1), evaluation[:, 5], label="Recall")
-    axs[1].set_title('Performance Metrics')
-    axs[1].set_xlabel('K')
-    axs[1].set_ylabel('Score')
-    axs[1].legend()
+    axs[1].set_title('Performance Metrics', fontsize=20)
+    axs[1].set_xlabel('K', fontsize=16)
+    axs[1].set_ylabel('Score', fontsize=16)
+    axs[1].legend(fontsize=16)
+    axs[1].tick_params(labelsize=16)
     axs[1].grid(True)
 
     # Plot MSE and RMSE
     axs[2].plot(range(1, K_evaluation_size + 1), evaluation[:, 9], label="RMSE")
     axs[2].plot(range(1, K_evaluation_size + 1), evaluation[:, 8], label="MSE")
-    axs[2].set_title('Error Metrics')
-    axs[2].set_xlabel('K')
-    axs[2].set_ylabel('Error')
-    axs[2].legend()
+    axs[2].set_title('Error Metrics', fontsize=20)
+    axs[2].set_xlabel('K', fontsize=16)
+    axs[2].set_ylabel('Error', fontsize=16)
+    axs[2].legend(fontsize=16)
+    axs[2].tick_params(labelsize=16)
     axs[2].grid(True)
 
     plt.tight_layout()
@@ -159,10 +162,6 @@ def main():
     X_train, X_val, Y_train, Y_val, dataset = load_data("assignments/nearest-neighbour-1/pima-indians-diabetes.csv")
 
     K_evaluation_size = 150
-
-    if K_evaluation_size > len(X_val):
-        print("ERROR: K Evaluation size is greater than the size of the validation set")
-        return
 
     evaluation = np.zeros((K_evaluation_size, 10))
 
