@@ -115,39 +115,39 @@ def evaluate_K(X_train, X_val, Y_train, Y_val, K):
     return np.array([TP, TN, FP, FN, precision_score, recall_score, f1_score_value, accuracy_score, MSE, RMSE])
 
 
-def plot_evaluation(evaluation, K_evaluation_size):
+def plot_evaluation(evaluation, evaluation_size, x_label, title_append=""):
     fig, axs = plt.subplots(3, 1, figsize=(10, 15))
 
     # Plot TP, TN, FP, FN
-    axs[0].plot(range(1, K_evaluation_size + 1), evaluation[:, 1], label="TN")
-    axs[0].plot(range(1, K_evaluation_size + 1), evaluation[:, 0], label="TP")
-    axs[0].plot(range(1, K_evaluation_size + 1), evaluation[:, 3], label="FN")
-    axs[0].plot(range(1, K_evaluation_size + 1), evaluation[:, 2], label="FP")
-    axs[0].set_title('Confusion Matrix Components', fontsize=20)
-    axs[0].set_xlabel('K', fontsize=16)
-    axs[0].set_ylabel('Count', fontsize=16)
+    axs[0].plot(range(1, evaluation_size + 1), evaluation[:, 1], label="TN")
+    axs[0].plot(range(1, evaluation_size + 1), evaluation[:, 0], label="TP")
+    axs[0].plot(range(1, evaluation_size + 1), evaluation[:, 3], label="FN")
+    axs[0].plot(range(1, evaluation_size + 1), evaluation[:, 2], label="FP")
+    axs[0].set_title("Confusion Matrix Components" + title_append, fontsize=20)
+    axs[0].set_xlabel(x_label, fontsize=16)
+    axs[0].set_ylabel("Count", fontsize=16)
     axs[0].legend(fontsize=16)
     axs[0].tick_params(labelsize=16)
     axs[0].grid(True)
 
     # Plot Precision, Recall, F1 Score, Accuracy
-    axs[1].plot(range(1, K_evaluation_size + 1), evaluation[:, 7], label="Accuracy")
-    axs[1].plot(range(1, K_evaluation_size + 1), evaluation[:, 4], label="Precision")
-    axs[1].plot(range(1, K_evaluation_size + 1), evaluation[:, 6], label="F1 Score")
-    axs[1].plot(range(1, K_evaluation_size + 1), evaluation[:, 5], label="Recall")
-    axs[1].set_title('Performance Metrics', fontsize=20)
-    axs[1].set_xlabel('K', fontsize=16)
-    axs[1].set_ylabel('Score', fontsize=16)
+    axs[1].plot(range(1, evaluation_size + 1), evaluation[:, 7], label="Accuracy")
+    axs[1].plot(range(1, evaluation_size + 1), evaluation[:, 4], label="Precision")
+    axs[1].plot(range(1, evaluation_size + 1), evaluation[:, 6], label="F1 Score")
+    axs[1].plot(range(1, evaluation_size + 1), evaluation[:, 5], label="Recall")
+    axs[1].set_title("Performance Metrics" + title_append, fontsize=20)
+    axs[1].set_xlabel(x_label, fontsize=16)
+    axs[1].set_ylabel("Score", fontsize=16)
     axs[1].legend(fontsize=16)
     axs[1].tick_params(labelsize=16)
     axs[1].grid(True)
 
     # Plot MSE and RMSE
-    axs[2].plot(range(1, K_evaluation_size + 1), evaluation[:, 9], label="RMSE")
-    axs[2].plot(range(1, K_evaluation_size + 1), evaluation[:, 8], label="MSE")
-    axs[2].set_title('Error Metrics', fontsize=20)
-    axs[2].set_xlabel('K', fontsize=16)
-    axs[2].set_ylabel('Error', fontsize=16)
+    axs[2].plot(range(1, evaluation_size + 1), evaluation[:, 9], label="RMSE")
+    axs[2].plot(range(1, evaluation_size + 1), evaluation[:, 8], label="MSE")
+    axs[2].set_title("Error Metrics" + title_append, fontsize=20)
+    axs[2].set_xlabel(x_label, fontsize=16)
+    axs[2].set_ylabel("Error", fontsize=16)
     axs[2].legend(fontsize=16)
     axs[2].tick_params(labelsize=16)
     axs[2].grid(True)
@@ -156,19 +156,35 @@ def plot_evaluation(evaluation, K_evaluation_size):
     plt.show()
 
 
-def main():
-    display_info(1)
-
-    X_train, X_val, Y_train, Y_val, dataset = load_data("assignments/nearest-neighbour-1/pima-indians-diabetes.csv")
-
+def evaluate_K_given_seed(seed):
+    X_train, X_val, Y_train, Y_val, dataset = load_data("assignments/nearest-neighbour-1/pima-indians-diabetes.csv", seed=seed)
     K_evaluation_size = 150
 
     evaluation = np.zeros((K_evaluation_size, 10))
 
-    for K in range(1, K_evaluation_size+1):
-        evaluation[K-1] = evaluate_K(X_train, X_val, Y_train, Y_val, K)
+    for K in range(1, K_evaluation_size + 1):
+        evaluation[K - 1] = evaluate_K(X_train, X_val, Y_train, Y_val, K)
 
-    plot_evaluation(evaluation, K_evaluation_size)
+    plot_evaluation(evaluation, K_evaluation_size, "K", f" (Seed={seed})")
+
+
+def evaluate_seed_given_K(K):
+    S_evaluation_size = 1000
+    start = 900
+    evaluation = np.zeros((S_evaluation_size-start, 10))
+
+    for s in range(start, S_evaluation_size):
+        np.random.seed(s)
+        X_train, X_val, Y_train, Y_val, dataset = load_data("assignments/nearest-neighbour-1/pima-indians-diabetes.csv", seed=s)
+        evaluation[s-start] = evaluate_K(X_train, X_val, Y_train, Y_val, K)
+
+    plot_evaluation(evaluation, S_evaluation_size-start, f"Seed (Start: {start}, End: {S_evaluation_size})", f" (K={K})")
+
+
+def main():
+    display_info(1)
+
+    evaluate_K_given_seed(7)
 
 
 main()
