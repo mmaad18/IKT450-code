@@ -26,8 +26,31 @@ def indicator_function(y, j):
     return 1 if y == j else 0
 
 
+def manhattan_distances(X_train, x0):
+    return np.sum(np.abs(X_train - x0), axis=1)
+
+
+def euclidean_distances(X_train, x0):
+    return np.linalg.norm(X_train - x0, axis=1)
+
+
+def chebyshev_distances(X_train, x0):
+    return np.max(np.abs(X_train - x0), axis=1)
+
+
+'''
+p is a parameter that determines the type of distance:
+* p=1: Manhattan Distance
+* p=2: Euclidean Distance
+* p=inf: Chebyshev Distance
+* Higher values of p give more emphasis to larger differences
+'''
+def minkowski_distances(X_train, x0, p=2):
+    return np.sum(np.abs(X_train - x0)**p, axis=1)**(1/p)
+
+
 def classify(X_train, Y_train, x0, K):
-    distances = np.linalg.norm(X_train - x0, axis=1)
+    distances = chebyshev_distances(X_train, x0)
 
     nearest_neighbors_indices = np.argsort(distances)[:K]
 
@@ -115,8 +138,10 @@ def evaluate_K(X_train, X_val, Y_train, Y_val, K):
     return np.array([TP, TN, FP, FN, precision_score, recall_score, f1_score_value, accuracy_score, MSE, RMSE])
 
 
-def plot_evaluation(evaluation, evaluation_size, x_label, title_append=""):
+def plot_evaluation(evaluation, x_label, title_append=""):
     fig, axs = plt.subplots(3, 1, figsize=(10, 15))
+
+    evaluation_size = evaluation.shape[0]
 
     # Plot TP, TN, FP, FN
     axs[0].plot(range(1, evaluation_size + 1), evaluation[:, 1], label="TN")
@@ -165,7 +190,7 @@ def evaluate_K_given_seed(seed):
     for K in range(1, K_evaluation_size + 1):
         evaluation[K - 1] = evaluate_K(X_train, X_val, Y_train, Y_val, K)
 
-    plot_evaluation(evaluation, K_evaluation_size, "K", f" (Seed={seed})")
+    plot_evaluation(evaluation, "K", f" (Seed={seed}, distance=Chebyshev)")
 
 
 def evaluate_seed_given_K(K):
@@ -178,7 +203,11 @@ def evaluate_seed_given_K(K):
         X_train, X_val, Y_train, Y_val, dataset = load_data("assignments/nearest-neighbour-1/pima-indians-diabetes.csv", seed=s)
         evaluation[s-start] = evaluate_K(X_train, X_val, Y_train, Y_val, K)
 
-    plot_evaluation(evaluation, S_evaluation_size-start, f"Seed (Start: {start}, End: {S_evaluation_size})", f" (K={K})")
+    plot_evaluation(evaluation, f"Seed (Start: {start}, End: {S_evaluation_size})", f" (K={K})")
+
+
+def plot_distance_MSEs(MSEs):
+    print(MSEs)
 
 
 def main():

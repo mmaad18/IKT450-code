@@ -1,6 +1,6 @@
-# 3 - Deep Feed Forward Neural Networks
+# 3 - MIGHT BE SKIPPED - Deep Feed Forward Neural Networks
 
-In this task you are suppose to develop a deep feed forward neural network using a high level library, e.g. PyTorch. 
+In this task you are supposed to develop a deep feed forward neural network using a high level library, e.g. PyTorch. 
 You should test different network structures. You need to register a Kaggle account. 
 
 - Download the ECG database https://www.cs.cmu.edu/~bobski/data/data.html
