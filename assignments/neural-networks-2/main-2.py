@@ -16,8 +16,8 @@ def sigmoid_prime(X):
 
 
 def softmax(X):
-    expX = np.exp(X)
-    return expX / np.sum(expX)
+    expX = np.exp(X - np.max(X, axis=1, keepdims=True))
+    return expX / np.sum(expX, axis=1, keepdims=True)
 
 
 def hidden_layer(W, X, phi, phi_d):
@@ -48,12 +48,12 @@ def network_backward(Ws, Ys, Yds, T, eta):
     E = T - Ys[-1]
     d_L = E
     D_W_L = eta * Ys[-2].T @ d_L
-    Ws[-1] += D_W_L
+    Ws[-1] -= D_W_L
 
     for i in range(len(Ws) - 2, -1, -1):
         d_L = d_L @ Ws[i + 1].T  * Yds[i]
         D_W_L = eta * Ys[i].T @ d_L
-        Ws[i] += D_W_L
+        Ws[i] -= D_W_L
 
     return Ws
 
@@ -101,10 +101,64 @@ def unit_tests():
     print(network_backward_test)
 
 
-def main():
-    display_info(2)
+def train(X, T, Ws, eta, epochs):
+    for i in range(epochs):
+        Ys, Yds = network_forward(Ws, X)
+        Ws = network_backward(Ws, Ys, Yds, T, eta)
 
-    unit_tests()
+    return Ws
+
+
+def data_preprocessing(file_path: str, seed: int = 7, split_ratio: float = 0.8):
+    np.random.seed(seed)
+
+    with open(file_path, 'r') as file:
+        data_list = [line.strip().split() for line in file]
+
+    data = np.array(data_list)
+    mask = (data[:, -1] == 'cp') | (data[:, -1] == 'im')
+    filtered_data = data[mask]
+
+    # Replace 'cp' with '1' and 'im' with '0' in the last column
+    labels = filtered_data[:, -1]
+    labels_numeric = np.where(labels == 'cp', 1.0, 0.0)
+    labels_numeric = labels_numeric.astype(int)
+
+    # Update the last column with numeric labels
+    filtered_data[:, -1] = labels_numeric.astype(str)
+    np.random.shuffle(filtered_data)
+
+    # Split into input (X) and output (Y) variables
+    index = int(len(filtered_data) * split_ratio)
+    X_train = filtered_data[:index, 1:8]
+    X_val = filtered_data[index:, 1:8]
+    Y_train = filtered_data[:index, 8]
+    Y_val = filtered_data[index:, 8]
+
+    return X_train, X_val, Y_train, Y_val, filtered_data
+
+
+def main():
+    #display_info(2)
+
+    #unit_tests()
+
+    X_train, X_val, Y_train, Y_val, filtered_data = data_preprocessing("assignments/neural-networks-2/ecoli.data")
+
+    Ws = [
+        np.random.rand(7, 3),
+        np.random.rand(3, 2),
+        np.random.rand(2, 1)
+    ]
+
+    eta = 0.1
+
+
+
+
+
+    a = 1
+
 
 
 main()
