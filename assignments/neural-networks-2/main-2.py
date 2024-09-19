@@ -51,7 +51,7 @@ def network_backward(Ws, Ys, Yds, T, eta):
     Ws[-1] -= D_W_L
 
     for i in range(len(Ws) - 2, -1, -1):
-        d_L = d_L @ Ws[i + 1].T  * Yds[i]
+        d_L = (d_L @ Ws[i + 1].T) * Yds[i]
         D_W_L = eta * Ys[i].T @ d_L
         Ws[i] -= D_W_L
 
@@ -82,7 +82,7 @@ def data_preprocessing(file_path: str, seed: int = 7, split_ratio: float = 0.8):
     Y_train = filtered_data[:index, 8].astype(float)
     Y_val = filtered_data[index:, 8].astype(float)
 
-    return X_train, X_val, Y_train, Y_val, filtered_data
+    return X_train, X_val, Y_train.reshape(-1, 1), Y_val.reshape(-1, 1), filtered_data
 
 
 def train(X, T, Ws, eta, epochs):
