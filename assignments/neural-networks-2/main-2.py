@@ -34,7 +34,7 @@ def output_layer(W, X, phi):
 
 
 def network_forward(Ws, X):
-    Ys = [X]
+    Ys = [1, X]
     Yds = []
     for i in range(len(Ws) - 1):
         X, Yd = hidden_layer(Ws[i], X, sigmoid, sigmoid_prime)
