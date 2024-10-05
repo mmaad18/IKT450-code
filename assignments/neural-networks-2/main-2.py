@@ -21,27 +21,30 @@ def softmax(X):
 
 
 def hidden_layer(W, X, phi, phi_d):
-    ones_column = np.ones((X.shape[0], 1))
-
-    X = np.hstack((ones_column, X))
     V = X @ W
-    return phi(V), phi_d(V)
+    Y = phi(V)
+    Yd = phi_d(V)
+
+    Y[:, -1] = 1
+    Yd[:, -1] = 0
+
+    return Y, Yd
 
 
 def output_layer(W, X, phi):
-    V = X @ W
-    return phi(V)
+    return phi(X @ W)
 
 
 def network_forward(Ws, X):
-    Ys = [1, X]
+    Ys = [X]
     Yds = []
     for i in range(len(Ws) - 1):
         X, Yd = hidden_layer(Ws[i], X, sigmoid, sigmoid_prime)
+
         Ys.append(X)
         Yds.append(Yd)
 
-    X = output_layer(Ws[-1], X, softmax)
+    X = output_layer(Ws[-1], X, sigmoid)
     Ys.append(X)
 
     return Ys, Yds
@@ -51,7 +54,7 @@ def network_backward(Ws, Ys, Yds, T, eta):
     E = T - Ys[-1]
     d_L = E
     D_W_L = eta * Ys[-2].T @ d_L
-    Ws[-1] = D_W_L
+    Ws[-1] += D_W_L
 
     for i in range(len(Ws) - 2, -1, -1):
         d_L = (d_L @ Ws[i + 1].T) * Yds[i]
@@ -61,7 +64,7 @@ def network_backward(Ws, Ys, Yds, T, eta):
     return Ws
 
 
-def data_preprocessing(file_path: str, seed: int = 7, split_ratio: float = 0.8):
+def data_preprocessing(file_path: str, seed: int = 15, split_ratio: float = 0.8):
     np.random.seed(seed)
 
     with open(file_path, 'r') as file:
@@ -92,8 +95,8 @@ def data_preprocessing(file_path: str, seed: int = 7, split_ratio: float = 0.8):
     ones_column_train = np.ones((n_train_samples, 1))
     ones_column_val = np.ones((n_val_samples, 1))
 
-    X_train = np.hstack((ones_column_train, X_train))
-    X_val = np.hstack((ones_column_val, X_val))
+    X_train = np.hstack((X_train, ones_column_train))
+    X_val = np.hstack((X_val, ones_column_val))
 
     return X_train, X_val, Y_train.reshape(-1, 1), Y_val.reshape(-1, 1), filtered_data
 
@@ -113,12 +116,12 @@ def main():
     X_train, X_val, Y_train, Y_val, filtered_data = data_preprocessing("assignments/neural-networks-2/ecoli.data")
 
     Ws = [
-        np.random.rand(8, 10),
-        np.random.rand(10, 5),
-        np.random.rand(5, 1)
+        0.1 * np.random.rand(8, 10),
+        0.1 * np.random.rand(10, 5),
+        0.1 * np.random.rand(5, 1)
     ]
 
-    eta = 0.1
+    eta = 0.001
     batch_size = 10
 
     for e in range(10):
@@ -127,7 +130,11 @@ def main():
 
     Ys, _ = network_forward(Ws, X_val)
 
-    a = 1
+    error = Ys[-1] - Y_val
+    print("Error: ", error.T)
+
+    RMS = np.sqrt(np.mean(error**2))
+    print("RMS: ", RMS)
 
 
 main()
