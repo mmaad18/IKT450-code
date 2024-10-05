@@ -50,16 +50,18 @@ def network_forward(Ws, X):
     return Ys, Yds
 
 
-def network_backward(Ws, Ys, Yds, T, eta):
+def network_backward(Ws, D_W_Ls, Ys, Yds, T, eta, alpha):
     E = T - Ys[-1]
     d_L = E
     D_W_L = eta * Ys[-2].T @ d_L
-    Ws[-1] += D_W_L
+    Ws[-1] += D_W_L + alpha * D_W_Ls[-1]
+    D_W_Ls[-1] = D_W_L
 
     for i in range(len(Ws) - 2, -1, -1):
         d_L = (d_L @ Ws[i + 1].T) * Yds[i]
         D_W_L = eta * Ys[i].T @ d_L
-        Ws[i] += D_W_L
+        Ws[i] += D_W_L + alpha * D_W_Ls[i]
+        D_W_Ls[i] = D_W_L
 
     return Ws
 
@@ -101,9 +103,9 @@ def data_preprocessing(file_path: str, seed: int = 15, split_ratio: float = 0.8)
     return X_train, X_val, Y_train.reshape(-1, 1), Y_val.reshape(-1, 1), filtered_data
 
 
-def train(X, T, Ws, eta):
+def train(X, T, Ws, D_W_Ls, eta, alpha):
     Ys, Yds = network_forward(Ws, X)
-    Ws = network_backward(Ws, Ys, Yds, T, eta)
+    Ws = network_backward(Ws, D_W_Ls, Ys, Yds, T, eta, alpha)
 
     return Ws
 
@@ -121,12 +123,15 @@ def main():
         0.1 * np.random.rand(5, 1)
     ]
 
-    eta = 0.001
+    D_W_Ls = Ws.copy()
+
+    eta = 0.01
+    alpha = 0.9
     batch_size = 10
 
-    for e in range(10):
+    for e in range(100):
         for i in range(0, len(X_train), batch_size):
-            Ws = train(X_train[i:i+batch_size], Y_train[i:i+batch_size], Ws, eta)
+            Ws = train(X_train[i:i+batch_size], Y_train[i:i+batch_size], Ws, D_W_Ls, eta, alpha)
 
     Ys, _ = network_forward(Ws, X_val)
 
