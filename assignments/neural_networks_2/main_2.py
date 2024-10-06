@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 
-from assignments.neural_networks_2.main_2_utils import data_preprocessing
+from assignments.neural_networks_2.main_2_utils import data_preprocessing, plot_rms
 from assignments.utils import display_info
 
 
@@ -107,12 +107,7 @@ def main():
         RMS = np.sqrt(np.mean(error**2))
         RMSs.append(RMS)
 
-    # Plot RMS
-    plt.plot(RMSs)
-    plt.xlabel("Epoch")
-    plt.ylabel("RMS")
-    plt.title("RMS vs Epoch")
-    plt.show()
+    plot_rms(RMSs, eta, alpha, batch_size)
 
 
 main()

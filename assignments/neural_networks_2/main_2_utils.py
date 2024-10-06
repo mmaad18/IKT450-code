@@ -1,4 +1,5 @@
 import numpy as np
+from matplotlib import pyplot as plt
 
 
 def data_preprocessing(file_path: str, seed: int = 15, split_ratio: float = 0.8):
@@ -36,4 +37,20 @@ def data_preprocessing(file_path: str, seed: int = 15, split_ratio: float = 0.8)
     X_val = np.hstack((X_val, ones_column_val))
 
     return X_train, X_val, Y_train.reshape(-1, 1), Y_val.reshape(-1, 1), filtered_data
+
+
+def plot_rms(RMSs, eta, alpha, batch_size):
+    plt.figure(figsize=(10, 6))
+    plt.plot(RMSs, label='RMS over epochs', color='blue', linewidth=2)
+
+    plt.xlabel("Epoch", fontsize=16)
+    plt.ylabel("RMS", fontsize=16)
+    plt.title(f"RMS vs Epochs (eta={eta}, alpha={alpha}, batch_size={batch_size})", fontsize=20)
+
+    plt.tick_params(labelsize=16)
+    plt.legend(fontsize=16)
+    plt.grid(True)
+    plt.show()
+
+
 
