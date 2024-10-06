@@ -1,12 +1,10 @@
 import copy
 
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy.stats import norm
 
-from assignments.neural_networks_2.main_2_utils import data_preprocessing, plot_rms
+from assignments.neural_networks_2.main_2_utils import data_preprocessing, plot_rms, plot_rms_multiple
 from assignments.utils import display_info
-
 
 """
 Functions
@@ -82,32 +80,42 @@ def main():
 
     X_train, X_val, Y_train, Y_val, filtered_data = data_preprocessing("assignments/neural_networks_2/ecoli.data")
 
-    Ws = [
-        xavier_normal(8, 256),
-        xavier_normal(256, 128),
-        xavier_normal(128, 100),
-        xavier_normal(100, 1)
-    ]
+    # Settings lists
+    eta_list = [0.001, 0.001]
+    alpha_list = [1.8, 0.9]
+    batch_size_list = [10, 10]
 
-    D_W_Ls = copy.deepcopy(Ws)
+    RMSs_list = []
 
-    eta = 0.001
-    alpha = 0.9
-    batch_size = 25
+    for s in range(len(eta_list)):
+        eta = eta_list[s]
+        alpha = alpha_list[s]
+        batch_size = batch_size_list[s]
 
-    RMSs = []
+        Ws = [
+            xavier_normal(8, 256),
+            xavier_normal(256, 128),
+            xavier_normal(128, 100),
+            xavier_normal(100, 1)
+        ]
 
-    for e in range(1000):
-        for i in range(0, len(X_train), batch_size):
-            Ws = train(X_train[i:i+batch_size], Y_train[i:i+batch_size], Ws, D_W_Ls, eta, alpha)
+        D_W_Ls = copy.deepcopy(Ws)
 
-        Ys, _ = network_forward(Ws, X_val)
+        RMSs = []
 
-        error = Ys[-1] - Y_val
-        RMS = np.sqrt(np.mean(error**2))
-        RMSs.append(RMS)
+        for e in range(1000):
+            for i in range(0, len(X_train), batch_size):
+                Ws = train(X_train[i:i+batch_size], Y_train[i:i+batch_size], Ws, D_W_Ls, eta, alpha)
 
-    plot_rms(RMSs, eta, alpha, batch_size)
+            Ys, _ = network_forward(Ws, X_val)
+
+            error = Ys[-1] - Y_val
+            RMS = np.sqrt(np.mean(error**2))
+            RMSs.append(RMS)
+
+        RMSs_list.append(RMSs)
+
+    plot_rms_multiple(RMSs_list, eta_list, alpha_list, batch_size_list)
 
 
 main()
