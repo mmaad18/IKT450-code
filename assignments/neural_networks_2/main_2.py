@@ -81,9 +81,9 @@ def main():
     X_train, X_val, Y_train, Y_val, filtered_data = data_preprocessing("assignments/neural_networks_2/ecoli.data")
 
     # Settings lists
-    eta_list = [0.001, 0.001]
-    alpha_list = [1.8, 0.9]
-    batch_size_list = [10, 10]
+    eta_list = [0.001, 0.001, 0.001]
+    alpha_list = [0.9, 1.35, 1.8]
+    batch_size_list = [10, 10, 10]
 
     RMSs_list = []
 
@@ -93,10 +93,11 @@ def main():
         batch_size = batch_size_list[s]
 
         Ws = [
-            xavier_normal(8, 256),
-            xavier_normal(256, 128),
-            xavier_normal(128, 100),
-            xavier_normal(100, 1)
+            xavier_normal(8, 50 + 1),
+            xavier_normal(50 + 1, 40 + 1),
+            xavier_normal(40 + 1, 30 + 1),
+            xavier_normal(30 + 1, 20 + 1),
+            xavier_normal(20 + 1, 1)
         ]
 
         D_W_Ls = copy.deepcopy(Ws)
@@ -115,7 +116,7 @@ def main():
 
         RMSs_list.append(RMSs)
 
-    plot_rms_multiple(RMSs_list, eta_list, alpha_list, batch_size_list)
+    plot_rms_multiple(RMSs_list, eta_list, alpha_list, batch_size_list, size="50, 40, 30, 20, 1")
 
 
 main()

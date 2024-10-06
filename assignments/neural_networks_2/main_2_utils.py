@@ -53,7 +53,7 @@ def plot_rms(RMSs, eta, alpha, batch_size):
     plt.show()
 
 
-def plot_rms_multiple(RMSs_list, eta_list, alpha_list, batch_size_list):
+def plot_rms_multiple(RMSs_list, eta_list, alpha_list, batch_size_list, size="1"):
     plt.figure(figsize=(10, 6))
 
     # Plot each RMS curve
@@ -66,7 +66,7 @@ def plot_rms_multiple(RMSs_list, eta_list, alpha_list, batch_size_list):
 
     plt.xlabel("Epoch", fontsize=16)
     plt.ylabel("RMS", fontsize=16)
-    plt.title("RMS vs Epochs for Different Hyperparameters", fontsize=20)
+    plt.title(f"RMS vs Epochs, Size=({size})", fontsize=20)
 
     plt.tick_params(labelsize=16)
     plt.legend(fontsize=16)
