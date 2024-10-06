@@ -1,5 +1,8 @@
+import copy
 
 import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import norm
 
 from assignments.utils import display_info
 
@@ -7,6 +10,11 @@ from assignments.utils import display_info
 '''
 Functions
 '''
+def xavier_normal(input_size: int, layer_size: int):
+    std_dev = np.sqrt(2.0 / (input_size + layer_size))
+    normal_dist = norm(loc=0.0, scale=std_dev)
+    return normal_dist.rvs(size=(input_size, layer_size))
+
 def sigmoid(X):
     return 1 / (1 + np.exp(-X))
 
@@ -118,28 +126,36 @@ def main():
     X_train, X_val, Y_train, Y_val, filtered_data = data_preprocessing("assignments/neural-networks-2/ecoli.data")
 
     Ws = [
-        0.1 * np.random.rand(8, 10),
-        0.1 * np.random.rand(10, 5),
-        0.1 * np.random.rand(5, 1)
+        xavier_normal(8, 256),
+        xavier_normal(256, 128),
+        xavier_normal(128, 100),
+        xavier_normal(100, 1)
     ]
 
-    D_W_Ls = Ws.copy()
+    D_W_Ls = copy.deepcopy(Ws)
 
-    eta = 0.01
+    eta = 0.001
     alpha = 0.9
-    batch_size = 10
+    batch_size = 25
 
-    for e in range(100):
+    RMSs = []
+
+    for e in range(1000):
         for i in range(0, len(X_train), batch_size):
             Ws = train(X_train[i:i+batch_size], Y_train[i:i+batch_size], Ws, D_W_Ls, eta, alpha)
 
-    Ys, _ = network_forward(Ws, X_val)
+        Ys, _ = network_forward(Ws, X_val)
 
-    error = Ys[-1] - Y_val
-    print("Error: ", error.T)
+        error = Ys[-1] - Y_val
+        RMS = np.sqrt(np.mean(error**2))
+        RMSs.append(RMS)
 
-    RMS = np.sqrt(np.mean(error**2))
-    print("RMS: ", RMS)
+    # Plot RMS
+    plt.plot(RMSs)
+    plt.xlabel("Epoch")
+    plt.ylabel("RMS")
+    plt.title("RMS vs Epoch")
+    plt.show()
 
 
 main()
