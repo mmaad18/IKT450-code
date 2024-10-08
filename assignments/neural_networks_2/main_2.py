@@ -3,7 +3,7 @@ import copy
 import numpy as np
 from scipy.stats import norm
 
-from assignments.neural_networks_2.main_2_utils import data_preprocessing, plot_rms, plot_rms_multiple
+from assignments.neural_networks_2.main_2_utils import data_preprocessing, plot_rms, plot_rms_multiple, shuffle_data
 from assignments.utils import display_info
 
 """
@@ -78,7 +78,7 @@ def train(X, T, Ws, D_W_Ls, eta, alpha):
 def main():
     display_info(2)
 
-    X_train, X_val, Y_train, Y_val, filtered_data = data_preprocessing("assignments/neural_networks_2/ecoli.data")
+    X_train, X_val, Y_train, Y_val = data_preprocessing("assignments/neural_networks_2/ecoli.data")
 
     # Settings lists
     eta_list = [0.001, 0.001, 0.001]
@@ -113,6 +113,8 @@ def main():
             error = Ys[-1] - Y_val
             RMS = np.sqrt(np.mean(error**2))
             RMSs.append(RMS)
+
+            X_train, X_val, Y_train, Y_val = shuffle_data(X_train, X_val, Y_train, Y_val, e)
 
         RMSs_list.append(RMSs)
 

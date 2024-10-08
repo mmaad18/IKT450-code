@@ -36,7 +36,23 @@ def data_preprocessing(file_path: str, seed: int = 15, split_ratio: float = 0.8)
     X_train = np.hstack((X_train, ones_column_train))
     X_val = np.hstack((X_val, ones_column_val))
 
-    return X_train, X_val, Y_train.reshape(-1, 1), Y_val.reshape(-1, 1), filtered_data
+    return X_train, X_val, Y_train.reshape(-1, 1), Y_val.reshape(-1, 1)
+
+
+def shuffle_data(X_train, X_val, Y_train, Y_val, seed):
+    np.random.seed(seed)
+
+    # Shuffle training data
+    train_indices = np.random.permutation(X_train.shape[0])
+    X_train_shuffled = X_train[train_indices]
+    Y_train_shuffled = Y_train[train_indices]
+
+    # Shuffle validation data
+    val_indices = np.random.permutation(X_val.shape[0])
+    X_val_shuffled = X_val[val_indices]
+    Y_val_shuffled = Y_val[val_indices]
+
+    return X_train_shuffled, X_val_shuffled, Y_train_shuffled, Y_val_shuffled
 
 
 def plot_rms(RMSs, eta, alpha, batch_size):
