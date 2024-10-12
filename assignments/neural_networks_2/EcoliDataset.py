@@ -9,14 +9,17 @@ class EcoliDataset(Dataset):
         self.split_ratio = split_ratio
         self.X, self.Y = self.data_preprocessing(file_path)
 
+
     def __len__(self):
         return len(self.Y)
+
 
     def __getitem__(self, index):
         X = self.X[index]
         Y = self.Y[index]
 
         return torch.tensor(X, dtype=torch.float32), torch.tensor(Y, dtype=torch.float32)
+
 
     def data_preprocessing(self, file_path: str):
         with open(file_path, 'r') as file:
