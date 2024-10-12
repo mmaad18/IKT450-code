@@ -6,7 +6,7 @@ from torchvision import datasets, transforms
 
 from assignments.neural_networks_2.EcoliDataset import EcoliDataset
 from assignments.neural_networks_2.EcoliNeuralNetwork import EcoliNeuralNetwork
-from assignments.neural_networks_2.main_2_utils import data_preprocessing
+from assignments.neural_networks_2.main_2_utils import data_preprocessing, plot_rms
 from assignments.utils import display_info
 
 
@@ -21,8 +21,8 @@ def load_device():
 
 
 def train_loop(dataloader, model, loss_fn, optimizer, batch_size, device="cpu"):
-    size = len(dataloader.dataset)
     model.train()
+    size = len(dataloader.dataset)
 
     for batch, (X, Y) in enumerate(dataloader):
         X, Y = X.to(device), Y.to(device)
@@ -46,6 +46,8 @@ def test_loop(dataloader, model, loss_fn, device="cpu"):
     num_batches = len(dataloader)
     test_loss, correct = 0, 0
 
+    test_loss_list = []
+
     # Prevents PyTorch from calculating and storing gradients
     with torch.no_grad():
         for X, Y in dataloader:
@@ -61,6 +63,8 @@ def test_loop(dataloader, model, loss_fn, device="cpu"):
 
 
 def main():
+    display_info(2)
+
     device = load_device()
     print(f"Using {device} device")
 
@@ -72,12 +76,12 @@ def main():
 
     learning_rate = 1e-3
     batch_size = 10
-    epochs = 5
+    epochs = 1000
 
     train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
     test_dataloader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
 
-    loss_fn = nn.CrossEntropyLoss()
+    loss_fn = nn.MSELoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
     for t in range(epochs):
