@@ -55,13 +55,13 @@ def shuffle_data(X_train, X_val, Y_train, Y_val, seed):
     return X_train_shuffled, X_val_shuffled, Y_train_shuffled, Y_val_shuffled
 
 
-def plot_rms(RMSs, eta, alpha, batch_size):
+def plot_loss(loss_type, losses, eta, alpha, batch_size):
     plt.figure(figsize=(10, 6))
-    plt.plot(RMSs, label='RMS over epochs', color='blue', linewidth=2)
+    plt.plot(losses, label=f"{loss_type} over epochs", color='blue', linewidth=2)
 
     plt.xlabel("Epoch", fontsize=16)
-    plt.ylabel("RMS", fontsize=16)
-    plt.title(f"RMS vs Epochs (eta={eta}, alpha={alpha}, batch_size={batch_size})", fontsize=20)
+    plt.ylabel(f"{loss_type}", fontsize=16)
+    plt.title(f"{loss_type} vs Epochs (eta={eta}, alpha={alpha}, batch_size={batch_size})", fontsize=20)
 
     plt.tick_params(labelsize=16)
     plt.legend(fontsize=16)
@@ -69,20 +69,20 @@ def plot_rms(RMSs, eta, alpha, batch_size):
     plt.show()
 
 
-def plot_rms_multiple(RMSs_list, eta_list, alpha_list, batch_size_list, size="1"):
+def plot_loss_multiple(loss_type, losses_list, eta_list, alpha_list, batch_size_list, size="1"):
     plt.figure(figsize=(10, 6))
 
     # Plot each RMS curve
-    for i, RMSs in enumerate(RMSs_list):
+    for i, RMSs in enumerate(losses_list):
         eta = eta_list[i]
         alpha = alpha_list[i]
         batch_size = batch_size_list[i]
 
-        plt.plot(RMSs, label=f'RMS (η={eta}, α={alpha}, batch_size={batch_size})', linewidth=2)
+        plt.plot(RMSs, label=f"{loss_type} (η={eta}, α={alpha}, batch_size={batch_size})", linewidth=2)
 
     plt.xlabel("Epoch", fontsize=16)
-    plt.ylabel("RMS", fontsize=16)
-    plt.title(f"RMS vs Epochs, Size=({size})", fontsize=20)
+    plt.ylabel(f"{loss_type}", fontsize=16)
+    plt.title(f"{loss_type} vs Epochs, Size=({size})", fontsize=20)
 
     plt.tick_params(labelsize=16)
     plt.legend(fontsize=16)

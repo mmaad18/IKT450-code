@@ -1,12 +1,10 @@
-import os
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
 
 from assignments.neural_networks_2.EcoliDataset import EcoliDataset
 from assignments.neural_networks_2.EcoliNeuralNetwork import EcoliNeuralNetwork
-from assignments.neural_networks_2.main_2_utils import data_preprocessing, plot_rms
+from assignments.neural_networks_2.main_2_utils import data_preprocessing, plot_loss
 from assignments.utils import display_info
 
 
@@ -46,20 +44,21 @@ def test_loop(dataloader, model, loss_fn, device="cpu"):
     num_batches = len(dataloader)
     test_loss, correct = 0, 0
 
-    test_loss_list = []
-
     # Prevents PyTorch from calculating and storing gradients
     with torch.no_grad():
         for X, Y in dataloader:
             X, Y = X.to(device), Y.to(device)
 
             pred = model(X)
+            pred_class = (pred > 0.5).float()
             test_loss += loss_fn(pred, Y).item()
-            correct += (pred.argmax(1) == Y).type(torch.float).sum().item()
+            correct += (pred_class == Y).type(torch.float).sum().item()
 
     test_loss /= num_batches
     correct /= size
-    print(f"Test Error: \n Accuracy: {(100 * correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
+    # print(f"Test Error: \n Accuracy: {(100 * correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
+
+    return test_loss
 
 
 def main():
@@ -77,18 +76,24 @@ def main():
     learning_rate = 1e-3
     batch_size = 10
     epochs = 1000
+    momentum = 0.9
 
     train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
     test_dataloader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
 
     loss_fn = nn.MSELoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
+
+    test_losses = []
 
     for t in range(epochs):
-        print(f"Epoch {t + 1}\n-------------------------------")
+        # print(f"Epoch {t + 1}\n-------------------------------")
         train_loop(train_dataloader, model, loss_fn, optimizer, batch_size, device)
-        test_loop(test_dataloader, model, loss_fn, device)
+        test_loss = test_loop(test_dataloader, model, loss_fn, device)
+        test_losses.append(test_loss)
     print("Done!")
+
+    plot_loss("MSE", test_losses, learning_rate, momentum, batch_size)
 
 
 main()

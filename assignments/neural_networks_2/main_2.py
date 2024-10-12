@@ -3,7 +3,7 @@ import copy
 import numpy as np
 from scipy.stats import norm
 
-from assignments.neural_networks_2.main_2_utils import data_preprocessing, plot_rms, plot_rms_multiple, shuffle_data
+from assignments.neural_networks_2.main_2_utils import data_preprocessing, plot_loss, plot_loss_multiple, shuffle_data
 from assignments.utils import display_info
 
 """
@@ -85,7 +85,7 @@ def main():
     alpha_list = [0.9, 1.35, 1.8]
     batch_size_list = [10, 10, 10]
 
-    RMSs_list = []
+    MSEs_list = []
 
     for s in range(len(eta_list)):
         eta = eta_list[s]
@@ -102,7 +102,7 @@ def main():
 
         D_W_Ls = copy.deepcopy(Ws)
 
-        RMSs = []
+        MSEs = []
 
         for e in range(1000):
             for i in range(0, len(X_train), batch_size):
@@ -111,14 +111,14 @@ def main():
             Ys, _ = network_forward(Ws, X_val)
 
             error = Ys[-1] - Y_val
-            RMS = np.sqrt(np.mean(error**2))
-            RMSs.append(RMS)
+            MSE = np.mean(error**2)
+            MSEs.append(MSE)
 
             X_train, X_val, Y_train, Y_val = shuffle_data(X_train, X_val, Y_train, Y_val, e)
 
-        RMSs_list.append(RMSs)
+        MSEs_list.append(MSEs)
 
-    plot_rms_multiple(RMSs_list, eta_list, alpha_list, batch_size_list, size="50, 40, 30, 20, 1")
+    plot_loss_multiple("MSE", MSEs_list, eta_list, alpha_list, batch_size_list, size="50, 40, 30, 20, 1")
 
 
 main()
