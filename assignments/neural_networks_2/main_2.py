@@ -93,11 +93,9 @@ def main():
         batch_size = batch_size_list[s]
 
         Ws = [
-            xavier_normal(8, 50 + 1),
-            xavier_normal(50 + 1, 40 + 1),
-            xavier_normal(40 + 1, 30 + 1),
-            xavier_normal(30 + 1, 20 + 1),
-            xavier_normal(20 + 1, 1)
+            xavier_normal(8, 3 + 1),
+            xavier_normal(3 + 1, 2 + 1),
+            xavier_normal(2 + 1, 1)
         ]
 
         D_W_Ls = copy.deepcopy(Ws)
@@ -118,7 +116,7 @@ def main():
 
         MSEs_list.append(MSEs)
 
-    plot_loss_multiple("MSE", MSEs_list, eta_list, alpha_list, batch_size_list, size="50, 40, 30, 20, 1")
+    plot_loss_multiple("MSE", MSEs_list, eta_list, alpha_list, batch_size_list, size="3, 2, 1")
 
 
 main()
