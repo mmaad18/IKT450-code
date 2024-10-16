@@ -68,7 +68,7 @@ def main():
     training_data = EcoliDataset("assignments/neural_networks_2/ecoli.data", training=True)
     test_data = EcoliDataset("assignments/neural_networks_2/ecoli.data", training=False)
 
-    learning_rate = 0.0001
+    learning_rate = 0.01
     momentum = 0.9
     batch_size = 10
     epochs = 1000
@@ -76,7 +76,7 @@ def main():
     train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
     test_dataloader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
 
-    loss_fn = nn.BCELoss()
+    loss_fn = nn.MSELoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
 
     test_losses = []
