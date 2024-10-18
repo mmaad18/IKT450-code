@@ -6,7 +6,7 @@ from torchvision.io import read_image
 from DatasetMode import DatasetMode as DM
 
 
-class Food11Dataset(Dataset):
+class FishDataset(Dataset):
     def __init__(self, file_path, mode=DM.TRAIN, split_ratio=0.8):
         self.file_path = file_path
         self.mode = mode

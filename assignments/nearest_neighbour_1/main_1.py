@@ -2,7 +2,7 @@
 import numpy as np
 
 from assignments.nearest_neighbour_1.main_1_utils import load_data, plot_evaluation
-from assignments.utils import display_info
+from utils import display_info
 
 
 def indicator_function(y, j):

@@ -4,23 +4,12 @@ from torch.utils.data import DataLoader
 
 from assignments.neural_networks_2.EcoliDataset import EcoliDataset
 from assignments.neural_networks_2.EcoliNeuralNetwork import EcoliNeuralNetwork
-from assignments.neural_networks_2.main_2_utils import data_preprocessing, plot_loss
-from assignments.utils import display_info
+from assignments.neural_networks_2.main_2_utils import plot_loss
+from utils import display_info, load_device
 
 
-def load_device():
-    return (
-        "cuda"
-        if torch.cuda.is_available()
-        else "mps"
-        if torch.backends.mps.is_available()
-        else "cpu"
-    )
-
-
-def train_loop(dataloader, model, loss_fn, optimizer, batch_size, device="cpu"):
+def train_loop(dataloader, model, loss_fn, optimizer, device="cpu"):
     model.train()
-    size = len(dataloader.dataset)
 
     for batch, (X, Y) in enumerate(dataloader):
         X, Y = X.to(device), Y.to(device)

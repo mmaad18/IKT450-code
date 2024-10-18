@@ -3,8 +3,8 @@ import copy
 import numpy as np
 from scipy.stats import norm
 
-from assignments.neural_networks_2.main_2_utils import data_preprocessing, plot_loss, plot_loss_multiple, shuffle_data
-from assignments.utils import display_info
+from assignments.neural_networks_2.main_2_utils import data_preprocessing, plot_loss_multiple, shuffle_data
+from utils import display_info
 
 """
 Functions

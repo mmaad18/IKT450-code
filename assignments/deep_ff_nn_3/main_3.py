@@ -1,7 +1,4 @@
-
-import numpy as np
-
-from assignments.utils import display_info
+from utils import display_info
 
 
 def main():
