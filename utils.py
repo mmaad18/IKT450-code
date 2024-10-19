@@ -25,6 +25,12 @@ def display_info(assignment_number: int):
     print(f"Assignment: {assignment_number}")
 
 
+def display_info_project():
+    print("Author: Mohamed Yahya Maad")
+    print("Course: IKT450")
+    print("Project: Fish Classification")
+
+
 def load_device():
     return (
         "cuda"
