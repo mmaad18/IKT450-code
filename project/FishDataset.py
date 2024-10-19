@@ -6,9 +6,10 @@ from torchvision.io import read_image
 from project.FishRecord import FishRecord
 
 
-class FishImageDataset(Dataset):
-    def __init__(self, root_path):
+class FishDataset(Dataset):
+    def __init__(self, root_path, prefix):
         self.root_path = root_path
+        self.prefix = prefix
         self.data_list = self.label_processing()
 
 
@@ -28,7 +29,7 @@ class FishImageDataset(Dataset):
 
         with open(label_file_path, 'r') as file:
             next(file)
-            data_list = [FishRecord(self.root_path, "fish", line.strip().split()[0]) for line in file]
+            data_list = [FishRecord(self.root_path, self.prefix, line.strip().split()[0]) for line in file]
 
         return data_list
 

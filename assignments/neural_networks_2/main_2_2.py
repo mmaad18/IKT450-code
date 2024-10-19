@@ -71,7 +71,7 @@ def main():
     test_losses = []
 
     for t in range(epochs):
-        train_loop(train_dataloader, model, loss_fn, optimizer, batch_size, device)
+        train_loop(train_dataloader, model, loss_fn, optimizer, device)
         test_loss = test_loop(test_dataloader, model, loss_fn, device)
         test_losses.append(test_loss)
 
