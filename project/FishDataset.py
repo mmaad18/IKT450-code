@@ -1,30 +1,34 @@
 import os
-import torch
+
 from torch.utils.data import Dataset
 from torchvision.io import read_image
 
-from DatasetMode import DatasetMode as DM
+from project.FishRecord import FishRecord
 
 
 class FishImageDataset(Dataset):
-    def __init__(self, root_path, mode=DM.TRAIN, split_ratio=0.8):
+    def __init__(self, root_path):
         self.root_path = root_path
-        self.mode = mode
-        self.split_ratio = split_ratio
+        self.data_list = self.label_processing()
 
 
     def __len__(self):
-        return 23
+        return len(self.data_list)
 
 
     def __getitem__(self, index):
-        img_path = os.path.join(self.root_path, self.img_labels.iloc[idx, 0])
-        image = read_image(img_path)
+        X = read_image(self.data_list[index].file_path)
+        Y = self.data_list[index].species
 
-        return torch.tensor(X, dtype=torch.float32), torch.tensor(Y, dtype=torch.float32)
-
-
-    def get_file_path(self):
+        return X, Y
 
 
-        return self.root_path
+    def label_processing(self):
+        label_file_path = os.path.join(self.root_path, "class_id.csv")
+
+        with open(label_file_path, 'r') as file:
+            next(file)
+            data_list = [FishRecord(self.root_path, "fish", line.strip().split()[0]) for line in file]
+
+        return data_list
+
