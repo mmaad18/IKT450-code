@@ -3,8 +3,9 @@ from torch import nn
 
 from project.FishDataset import FishDataset
 from project.FishNeuralNetwork import FishNeuralNetwork
-from project.main_project_utils import dataset_to_loaders
+from project.main_project_utils import dataset_to_loaders, plot_loss
 from utils import display_info_project, load_device
+from torchvision import transforms
 
 
 def train_loop(dataloader, model, loss_fn, optimizer, device="cpu"):
@@ -58,7 +59,14 @@ def main():
     batch_size = 10
     epochs = 1000
 
-    fish_data = FishDataset("datasets/Fish_GT", "fish")
+    transform = transforms.Compose([
+        transforms.Resize(224),  # Resize the shorter side to 224 and keep the aspect ratio
+        transforms.Pad((0, 0, 224, 224)),  # Pad the rest to get a 224x224 image
+        transforms.CenterCrop(224),  # Optionally crop to ensure the exact dimensions
+        transforms.ToTensor()  # Convert the image to a tensor
+    ])
+
+    fish_data = FishDataset("datasets/Fish_GT", "fish", transform)
     train_loader, eval_loader, test_loader = dataset_to_loaders(fish_data, batch_size)
 
     loss_fn = nn.MSELoss()

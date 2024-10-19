@@ -7,9 +7,10 @@ from project.FishRecord import FishRecord
 
 
 class FishDataset(Dataset):
-    def __init__(self, root_path, prefix):
+    def __init__(self, root_path, prefix, transform):
         self.root_path = root_path
         self.prefix = prefix
+        self.transform = transform
         self.data_list = self.label_processing()
 
 
@@ -19,6 +20,7 @@ class FishDataset(Dataset):
 
     def __getitem__(self, index):
         X = read_image(self.data_list[index].file_path)
+        X = self.transform(X)
         Y = self.data_list[index].species
 
         return X, Y

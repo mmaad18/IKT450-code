@@ -7,6 +7,13 @@ class FishNeuralNetwork(nn.Module):
         super().__init__()
 
         self.network_stack = nn.Sequential(
+            nn.Conv3d(3, 8, kernel_size=(3, 3, 3)),
+            nn.ReLU(),
+            nn.MaxPool3d(kernel_size=(2, 2, 2)),
+            nn.Conv3d(8, 16, kernel_size=(3, 3, 3)),
+            nn.ReLU(),
+            nn.MaxPool3d(kernel_size=(2, 2, 2)),
+            nn.Flatten(),
             nn.Linear(7, 3),
             nn.Sigmoid(),
             nn.Linear(3, 2),
