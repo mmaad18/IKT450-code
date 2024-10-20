@@ -2,7 +2,6 @@ import os
 
 from PIL import Image
 from torch.utils.data import Dataset
-from torchvision import transforms
 
 from project.FishRecord import FishRecord
 
@@ -22,13 +21,9 @@ class FishDataset(Dataset):
     def __getitem__(self, index):
         X = Image.open(self.data_list[index].file_path)
         X = self.transform(X)
-        Y = self.data_list[index].species
+        T = self.data_list[index].species
 
-        to_pil = transforms.ToPILImage()
-        pil_image = to_pil(X)
-        pil_image.save(f"out/output_image_{index}.png")
-
-        return X, Y
+        return X, T
 
 
     def label_processing(self):

@@ -19,7 +19,7 @@ def dataset_to_loaders(dataset, batch_size: int, train_factor=0.7, val_factor=0.
     return train_loader, eval_loader, test_loader
 
 
-def plot_loss(loss_type: str, losses, eta: int, alpha: float, batch_size: int):
+def plot_loss(loss_type: str, losses, eta: float, alpha: float, batch_size: int):
     plt.figure(figsize=(10, 6))
     plt.plot(losses, label=f"{loss_type} over epochs", color='blue', linewidth=2)
 

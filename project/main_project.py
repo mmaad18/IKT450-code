@@ -11,11 +11,11 @@ from torchvision import transforms
 def train_loop(dataloader, model, loss_fn, optimizer, device="cpu"):
     model.train()
 
-    for batch, (X, Y) in enumerate(dataloader):
-        X, Y = X.to(device), Y.to(device)
+    for batch, (X, T) in enumerate(dataloader):
+        X, T = X.to(device), T.to(device)
 
-        pred = model(X)
-        loss = loss_fn(pred, Y)
+        Y = model(X)
+        loss = loss_fn(Y, T)
 
         # Backpropagation
         loss.backward()
@@ -31,13 +31,13 @@ def test_loop(dataloader, model, loss_fn, device="cpu"):
 
     # Prevents PyTorch from calculating and storing gradients
     with torch.no_grad():
-        for X, Y in dataloader:
-            X, Y = X.to(device), Y.to(device)
+        for X, T in dataloader:
+            X, T = X.to(device), T.to(device)
 
-            pred = model(X)
-            pred_class = (pred > 0.5).float()
-            test_loss += loss_fn(pred, Y).item()
-            correct += (pred_class == Y).type(torch.float).sum().item()
+            Y = model(X)
+            pred_class = (Y > 0.5).float()
+            test_loss += loss_fn(Y, T).item()
+            correct += (pred_class == T).type(torch.float).sum().item()
 
     test_loss /= num_batches
     correct /= size
@@ -56,19 +56,19 @@ def main():
 
     learning_rate = 0.01
     momentum = 0.9
-    batch_size = 10
+    batch_size = 100
     epochs = 1000
 
     transform = transforms.Compose([
-        transforms.Resize(224),  # Resize the shorter side to 224 and keep the aspect ratio
-        transforms.Pad((0, 0, 224, 224)),  # Pad the rest to get a 224x224 image
+        transforms.Resize(128),  # Resize the shorter side to 256 and keep the aspect ratio
+        transforms.CenterCrop(128),
         transforms.ToTensor()  # Convert the image to a tensor
     ])
 
     fish_data = FishDataset("datasets/Fish_GT", "fish", transform)
     train_loader, eval_loader, test_loader = dataset_to_loaders(fish_data, batch_size)
 
-    loss_fn = nn.CrossEntropyLoss()
+    loss_fn = nn.MSELoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
 
     test_losses = []
@@ -78,7 +78,15 @@ def main():
         test_loss = test_loop(test_loader, model, loss_fn, device)
         test_losses.append(test_loss)
 
-        if t % 10 == 0:
+        if t % 1 == 0:
+            # Check if CUDA is available
+            print(f"CUDA available: {torch.cuda.is_available()}")
+            # Check which device your model is on
+            print(f"Model device: {next(model.parameters()).device}")
+            # Print current memory usage on GPU
+            print(f"Memory allocated: {torch.cuda.memory_allocated() / 1e6} MB")
+            print(f"Memory cached: {torch.cuda.memory_reserved() / 1e6} MB")
+
             print(f"Epoch {t}\n-------------------------------")
             print(f"Test Error: {test_loss}\n")
 
