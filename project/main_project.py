@@ -62,7 +62,6 @@ def main():
     transform = transforms.Compose([
         transforms.Resize(224),  # Resize the shorter side to 224 and keep the aspect ratio
         transforms.Pad((0, 0, 224, 224)),  # Pad the rest to get a 224x224 image
-        transforms.CenterCrop(224),  # Optionally crop to ensure the exact dimensions
         transforms.ToTensor()  # Convert the image to a tensor
     ])
 

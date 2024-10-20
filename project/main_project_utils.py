@@ -1,8 +1,12 @@
+import os
+import numpy as np
+
+from PIL import Image
 from matplotlib import pyplot as plt
 from torch.utils.data import DataLoader, random_split
 
 
-def dataset_to_loaders(dataset, batch_size, train_factor=0.7, val_factor=0.2):
+def dataset_to_loaders(dataset, batch_size: int, train_factor=0.7, val_factor=0.2):
     train_size = int(train_factor * len(dataset))
     val_size = int(val_factor * len(dataset))
     test_size = len(dataset) - train_size - val_size
@@ -15,7 +19,7 @@ def dataset_to_loaders(dataset, batch_size, train_factor=0.7, val_factor=0.2):
     return train_loader, eval_loader, test_loader
 
 
-def plot_loss(loss_type, losses, eta, alpha, batch_size):
+def plot_loss(loss_type: str, losses, eta: int, alpha: float, batch_size: int):
     plt.figure(figsize=(10, 6))
     plt.plot(losses, label=f"{loss_type} over epochs", color='blue', linewidth=2)
 
@@ -27,5 +31,26 @@ def plot_loss(loss_type, losses, eta, alpha, batch_size):
     plt.legend(fontsize=16)
     plt.grid(True)
     plt.show()
+
+
+def images_size(root_path: str):
+    sizes = []
+    paths = []
+
+    for folder in os.listdir(root_path):
+        folder_path = os.path.join(root_path, folder)
+        for file in os.listdir(folder_path):
+            if file.endswith(".png"):
+                file_path = os.path.join(folder_path, file)
+                with Image.open(file_path) as img:
+                    sizes.append(img.size)
+                    paths.append(file_path)
+
+    return np.array(sizes), paths
+
+
+def path_to_fish_id(path: str):
+    file_name = path.split('\\')[-1]
+    return int(file_name.split('_')[-1].split('.')[0])
 
 
