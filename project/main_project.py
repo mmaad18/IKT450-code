@@ -68,7 +68,7 @@ def main():
     fish_data = FishDataset("datasets/Fish_GT", "fish", transform)
     train_loader, eval_loader, test_loader = dataset_to_loaders(fish_data, batch_size)
 
-    loss_fn = nn.MSELoss()
+    loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
 
     test_losses = []

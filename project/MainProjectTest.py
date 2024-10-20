@@ -43,14 +43,11 @@ class MainProjectTest(unittest.TestCase):
         self.assertEqual(min_width_fish_id, 3992)
 
 
-    def test_images_size_distribution(self):
+    def test_images_size_histogram(self):
         sizes, paths = images_size("C:\\Users\\mmbio\\Documents\\GitHub\\IKT450-code\\datasets\\Fish_GT\\fish_image")
-
-        # Extract width and height
         widths = sizes[:, 0]
         heights = sizes[:, 1]
 
-        # Plotting histograms for width and height
         plt.figure(figsize=(10, 5))
 
         # Histogram for widths
@@ -72,6 +69,22 @@ class MainProjectTest(unittest.TestCase):
 
         self.assertEqual(len(sizes), 27370)
 
+
+    def test_images_size_scatter_plot(self):
+        sizes, paths = images_size("C:\\Users\\mmbio\\Documents\\GitHub\\IKT450-code\\datasets\\Fish_GT\\fish_image")
+        widths = sizes[:, 0]
+        heights = sizes[:, 1]
+
+        # Scatter plot for image sizes (Width vs Height)
+        plt.figure(figsize=(6, 6))
+        plt.scatter(widths, heights, color='purple', alpha=0.3)
+        plt.title('Image Sizes (Width vs Height)')
+        plt.xlabel('Width')
+        plt.ylabel('Height')
+        plt.grid(True)
+        plt.show()
+
+        self.assertEqual(len(sizes), 27370)
 
 
 if __name__ == '__main__':
