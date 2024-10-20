@@ -1,3 +1,5 @@
+import time
+
 import torch
 from torch import nn
 
@@ -35,7 +37,7 @@ def test_loop(dataloader, model, loss_fn, device="cpu"):
             X, T = X.to(device), T.to(device)
 
             Y = model(X)
-            pred_class = (Y > 0.5).float()
+            pred_class = Y.argmax(dim=0)
             test_loss += loss_fn(Y, T).item()
             correct += (pred_class == T).type(torch.float).sum().item()
 
@@ -56,8 +58,8 @@ def main():
 
     learning_rate = 0.01
     momentum = 0.9
-    batch_size = 100
-    epochs = 1000
+    batch_size = 1000
+    epochs = 10
 
     transform = transforms.Compose([
         transforms.Resize(128),  # Resize the shorter side to 256 and keep the aspect ratio
@@ -69,7 +71,9 @@ def main():
     train_loader, eval_loader, test_loader = dataset_to_loaders(fish_data, batch_size)
 
     loss_fn = nn.MSELoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
+    optimizer = torch.optim.NAdam(model.parameters(), lr=learning_rate)
+
+    start = time.perf_counter()
 
     test_losses = []
 
@@ -89,6 +93,9 @@ def main():
 
             print(f"Epoch {t}\n-------------------------------")
             print(f"Test Error: {test_loss}\n")
+
+            end = time.perf_counter()
+            print(f"Elapsed time: {end - start} seconds")
 
     print("Done!")
     plot_loss("MSE", test_losses, learning_rate, momentum, batch_size)
