@@ -101,6 +101,7 @@ def main():
     plot_loss("MSE", test_losses, learning_rate, momentum, batch_size)
 
 
-main()
+if __name__ == "__main__":
+    main()
 
 
