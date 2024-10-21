@@ -12,6 +12,7 @@ class FishDataset(Dataset):
         self.prefix = prefix
         self.transform = transform
         self.data_list = self.label_processing()
+        self.X, self.T = self.data_preprocessing()
 
 
     def __len__(self):
@@ -19,11 +20,7 @@ class FishDataset(Dataset):
 
 
     def __getitem__(self, index):
-        X = Image.open(self.data_list[index].file_path)
-        X = self.transform(X)
-        T = self.data_list[index].species
-
-        return X, T
+        return self.X[index], self.T[index]
 
 
     def label_processing(self):
@@ -35,3 +32,15 @@ class FishDataset(Dataset):
 
         return data_list
 
+
+    def data_preprocessing(self):
+        X_list = []
+        T_list = []
+
+        for record in self.data_list:
+            image_X = Image.open(record.file_path)
+            tensor_X = self.transform(image_X)
+            X_list.append(tensor_X)
+            T_list.append(record.species)
+
+        return X_list, T_list
