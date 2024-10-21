@@ -58,8 +58,8 @@ def main():
 
     learning_rate = 0.01
     momentum = 0.9
-    batch_size = 1000
-    epochs = 10
+    batch_size = 100
+    epochs = 100
 
     transform = transforms.Compose([
         transforms.Resize(128),  # Resize the shorter side to 256 and keep the aspect ratio
