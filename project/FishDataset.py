@@ -7,10 +7,11 @@ from project.FishRecord import FishRecord
 
 
 class FishDataset(Dataset):
-    def __init__(self, root_path, prefix, transform):
+    def __init__(self, root_path, prefix, transform, device="cpu"):
         self.root_path = root_path
         self.prefix = prefix
         self.transform = transform
+        self.device = device
         self.data_list = self.label_processing()
         self.X, self.T = self.data_preprocessing()
 
@@ -40,7 +41,7 @@ class FishDataset(Dataset):
         for record in self.data_list:
             image_X = Image.open(record.file_path)
             tensor_X = self.transform(image_X)
-            X_list.append(tensor_X)
-            T_list.append(record.species)
+            X_list.append(tensor_X.to(self.device))
+            T_list.append(record.species.to(self.device))
 
         return X_list, T_list

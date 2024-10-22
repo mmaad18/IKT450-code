@@ -14,8 +14,6 @@ def train_loop(dataloader, model, loss_fn, optimizer, device="cpu"):
     model.train()
 
     for batch, (X, T) in enumerate(dataloader):
-        X, T = X.to(device), T.to(device)
-
         Y = model(X)
         loss = loss_fn(Y, T)
 
@@ -34,8 +32,6 @@ def test_loop(dataloader, model, loss_fn, device="cpu"):
     # Prevents PyTorch from calculating and storing gradients
     with torch.no_grad():
         for X, T in dataloader:
-            X, T = X.to(device), T.to(device)
-
             Y = model(X)
             pred_class = Y.argmax(dim=0)
             test_loss += loss_fn(Y, T).item()
@@ -67,7 +63,7 @@ def main():
         transforms.ToTensor()  # Convert the image to a tensor
     ])
 
-    fish_data = FishDataset("datasets/Fish_GT", "fish", transform)
+    fish_data = FishDataset("datasets/Fish_GT", "fish", transform, device)
     train_loader, eval_loader, test_loader = dataset_to_loaders(fish_data, batch_size)
 
     loss_fn = nn.MSELoss()
@@ -77,17 +73,14 @@ def main():
 
     test_losses = []
 
+    print("12345")
+
     for t in range(epochs):
         train_loop(train_loader, model, loss_fn, optimizer, device)
         test_loss = test_loop(test_loader, model, loss_fn, device)
         test_losses.append(test_loss)
 
         if t % 1 == 0:
-            # Check if CUDA is available
-            print(f"CUDA available: {torch.cuda.is_available()}")
-            # Check which device your model is on
-            print(f"Model device: {next(model.parameters()).device}")
-            # Print current memory usage on GPU
             print(f"Memory allocated: {torch.cuda.memory_allocated() / 1e6} MB")
             print(f"Memory cached: {torch.cuda.memory_reserved() / 1e6} MB")
 

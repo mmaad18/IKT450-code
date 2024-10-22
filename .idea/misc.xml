@@ -3,5 +3,5 @@
   <component name="Black">
     <option name="sdkName" value="torch311" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="torch311" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="Remote Python 3.10.12 (sftp://ubuntu@209.20.158.22:22/home/ubuntu/.virtualenvs/IKT450-code/bin/python)" project-jdk-type="Python SDK" />
 </project>
