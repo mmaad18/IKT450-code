@@ -56,7 +56,7 @@ def main():
     model = FishNeuralNetworkLocal().to(device)
     print(model)
 
-    learning_rate = 0.01
+    learning_rate = 0.1
     momentum = 0.9
     batch_size = 100
     epochs = 100
@@ -71,7 +71,7 @@ def main():
     train_loader, eval_loader, test_loader = dataset_to_loaders(fish_data, batch_size)
 
     loss_fn = nn.MSELoss()
-    optimizer = torch.optim.NAdam(model.parameters(), lr=learning_rate)
+    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
 
     start = time.perf_counter()
 
