@@ -14,6 +14,8 @@ def train_loop(dataloader, model, loss_fn, optimizer, device="cpu"):
     model.train()
 
     for batch, (X, T) in enumerate(dataloader):
+        X, T = X.to(device), T.to(device)
+
         Y = model(X)
         loss = loss_fn(Y, T)
 
@@ -32,6 +34,8 @@ def test_loop(dataloader, model, loss_fn, device="cpu"):
     # Prevents PyTorch from calculating and storing gradients
     with torch.no_grad():
         for X, T in dataloader:
+            X, T = X.to(device), T.to(device)
+
             Y = model(X)
             pred_class = Y.argmax(dim=0)
             test_loss += loss_fn(Y, T).item()
