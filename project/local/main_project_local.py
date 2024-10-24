@@ -3,8 +3,8 @@ import time
 import torch
 from torch import nn
 
-from project.FishDataset import FishDataset
-from project.FishNeuralNetwork import FishNeuralNetwork
+from project.local.FishDatasetLocal import FishDatasetLocal
+from project.local.FishNeuralNetworkLocal import FishNeuralNetworkLocal
 from project.main_project_utils import dataset_to_loaders, plot_loss
 from utils import display_info_project, load_device
 from torchvision import transforms
@@ -49,7 +49,7 @@ def main():
     device = load_device()
     print(f"Using {device} device")
 
-    model = FishNeuralNetwork().to(device)
+    model = FishNeuralNetworkLocal().to(device)
     print(model)
 
     learning_rate = 0.01
@@ -58,12 +58,12 @@ def main():
     epochs = 100
 
     transform = transforms.Compose([
-        transforms.Resize(128),  # Resize the shorter side to 256 and keep the aspect ratio
-        transforms.CenterCrop(128),
+        transforms.Resize(64),  # Resize the shorter side to 256 and keep the aspect ratio
+        transforms.CenterCrop(64),
         transforms.ToTensor()  # Convert the image to a tensor
     ])
 
-    fish_data = FishDataset("datasets/Fish_GT", "fish", transform, device)
+    fish_data = FishDatasetLocal("datasets/Fish_GT", "fish", transform)
     train_loader, eval_loader, test_loader = dataset_to_loaders(fish_data, batch_size)
 
     loss_fn = nn.MSELoss()
@@ -72,8 +72,6 @@ def main():
     start = time.perf_counter()
 
     test_losses = []
-
-    print("12345")
 
     for t in range(epochs):
         train_loop(train_loader, model, loss_fn, optimizer, device)

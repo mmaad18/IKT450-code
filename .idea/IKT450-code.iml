@@ -5,7 +5,7 @@
       <excludeFolder url="file://$MODULE_DIR$/datasets" />
       <excludeFolder url="file://$MODULE_DIR$/out" />
     </content>
-    <orderEntry type="jdk" jdkName="Remote Python 3.10.12 (sftp://ubuntu@209.20.158.22:22/home/ubuntu/.virtualenvs/IKT450-code/bin/python)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="torch311" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

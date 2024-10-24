@@ -6,7 +6,7 @@ from torch.utils.data import Dataset
 from project.FishRecord import FishRecord
 
 
-class FishDataset(Dataset):
+class FishDatasetRemote(Dataset):
     def __init__(self, root_path, prefix, transform, device="cpu"):
         self.root_path = root_path
         self.prefix = prefix
