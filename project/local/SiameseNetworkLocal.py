@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
-from project.local.FishNeuralNetworkLocal import FishNeuralNetworkLocal
+from project.local.FishNetworkLocal import FishNeuralNetworkLocal
 
 
 class SiameseNetwork(nn.Module):
