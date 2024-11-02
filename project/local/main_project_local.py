@@ -62,8 +62,8 @@ def main():
     epochs = 100
 
     transform = transforms.Compose([
-        transforms.Resize(64),  # Resize the shorter side to 256 and keep the aspect ratio
-        transforms.CenterCrop(64),
+        transforms.Resize(32),  # Resize the shorter side to 256 and keep the aspect ratio
+        transforms.CenterCrop(32),
         transforms.ToTensor()  # Convert the image to a tensor
     ])
 
