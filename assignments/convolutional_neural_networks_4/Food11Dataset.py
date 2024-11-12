@@ -1,30 +1,40 @@
 import os
-import torch
-from torch.utils.data import Dataset
-from torchvision.io import read_image
 
-from DatasetMode import DatasetMode as DM
+from PIL import Image
+from torch.utils.data import Dataset
 
 
 class Food11Dataset(Dataset):
-    def __init__(self, file_path, mode=DM.TRAIN, split_ratio=0.8):
-        self.file_path = file_path
-        self.mode = mode
-        self.split_ratio = split_ratio
+    def __init__(self, root_path, prefix, transform):
+        self.root_path = root_path
+        self.prefix = prefix
+        self.transform = transform
 
-        self.img_labels = [
+        self.data_list = [
             'Bread', 'Dairy product', 'Dessert', 'Egg', 'Fried food', 'Meat', 'Noodles-Pasta', 'Rice', 'Seafood', 'Soup', 'Vegetable-Fruit'
         ]
+        self.X, self.T = self.data_preprocessing()
 
 
     def __len__(self):
-        return len(self.img_labels)
+        return len(self.data_list)
 
 
     def __getitem__(self, index):
-        img_path = os.path.join(self.file_path, self.img_labels.iloc[idx, 0])
-        image = read_image(img_path)
+        return self.X[index], self.T[index]
 
-        return torch.tensor(X, dtype=torch.float32), torch.tensor(Y, dtype=torch.float32)
+
+    def data_preprocessing(self):
+        X_list = []
+        T_list = []
+
+        for record in self.data_list:
+            file_path = os.path.join(self.root_path, record)
+            image_X = Image.open(record.file_path)
+            tensor_X = self.transform(image_X)
+            X_list.append(tensor_X)
+            T_list.append(record.species)
+
+        return X_list, T_list
 
 
