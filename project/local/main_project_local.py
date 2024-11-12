@@ -5,8 +5,8 @@ from torch import nn
 
 from project.local.FishDatasetLocal import FishDatasetLocal
 from project.local.FishNetworkLocal import FishNeuralNetworkLocal
-from project.main_project_utils import dataset_to_loaders, plot_loss
-from utils import display_info_project, load_device
+from project.main_project_utils import plot_loss
+from utils import display_info_project, load_device, dataset_to_loaders
 from torchvision import transforms
 
 

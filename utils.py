@@ -1,5 +1,6 @@
 import time
 import torch
+from torch.utils.data import DataLoader, random_split
 
 
 def time_function(func, *args, **kwargs):
@@ -39,3 +40,16 @@ def load_device():
         if torch.backends.mps.is_available()
         else "cpu"
     )
+
+
+def dataset_to_loaders(dataset, batch_size: int, train_factor=0.7, val_factor=0.2, num_workers=0):
+    train_size = int(train_factor * len(dataset))
+    val_size = int(val_factor * len(dataset))
+    test_size = len(dataset) - train_size - val_size
+    train_data, eval_data, test_data = random_split(dataset, [train_size, val_size, test_size])
+
+    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+    eval_loader = DataLoader(eval_data, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+    test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+
+    return train_loader, eval_loader, test_loader
