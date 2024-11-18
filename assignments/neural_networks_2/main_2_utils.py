@@ -20,11 +20,11 @@ def data_preprocessing(file_path: str, seed: int = 15, split_ratio: float = 0.8)
     np.random.shuffle(filtered_data)
 
     # Split into input (X) and output (Y) variables
-    index = int(len(filtered_data) * split_ratio)
-    X_train = filtered_data[:index, 1:8].astype(float)
-    X_val = filtered_data[index:, 1:8].astype(float)
-    Y_train = filtered_data[:index, 8].astype(float)
-    Y_val = filtered_data[index:, 8].astype(float)
+    idx = int(len(filtered_data) * split_ratio)
+    X_train = filtered_data[:idx, 1:8].astype(float)
+    X_val = filtered_data[idx:, 1:8].astype(float)
+    Y_train = filtered_data[:idx, 8].astype(float)
+    Y_val = filtered_data[idx:, 8].astype(float)
 
     # Add a column of ones to X_train and X_val
     n_train_samples = X_train.shape[0]

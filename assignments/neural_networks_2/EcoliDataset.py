@@ -14,9 +14,9 @@ class EcoliDataset(Dataset):
         return len(self.Y)
 
 
-    def __getitem__(self, index):
-        X = self.X[index]
-        Y = self.Y[index]
+    def __getitem__(self, idx):
+        X = self.X[idx]
+        Y = self.Y[idx]
 
         return torch.tensor(X, dtype=torch.float32), torch.tensor(Y, dtype=torch.float32)
 
@@ -35,11 +35,11 @@ class EcoliDataset(Dataset):
         filtered_data[:, -1] = np.where(labels == "cp", 1.0, 0.0)
 
         # Select training or validation data
-        index = int(len(filtered_data) * self.split_ratio)
+        idx = int(len(filtered_data) * self.split_ratio)
         if self.training:
-            filtered_data = filtered_data[:index]
+            filtered_data = filtered_data[:idx]
         else:
-            filtered_data = filtered_data[index:]
+            filtered_data = filtered_data[idx:]
 
         # Split into input (X) and output (Y) variables
         X = filtered_data[:, 1:8].astype(float)

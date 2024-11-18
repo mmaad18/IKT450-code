@@ -10,11 +10,11 @@ def load_data(file_path: str, seed: int = 7, split_ratio: float = 0.8):
     np.random.shuffle(dataset)
 
     # Split into input (X) and output (Y) variables
-    index = int(len(dataset) * split_ratio)
-    X_train = dataset[:index, 0:8]
-    X_val = dataset[index:, 0:8]
-    Y_train = dataset[:index, 8]
-    Y_val = dataset[index:, 8]
+    idx = int(len(dataset) * split_ratio)
+    X_train = dataset[:idx, 0:8]
+    X_val = dataset[idx:, 0:8]
+    Y_train = dataset[:idx, 8]
+    Y_val = dataset[idx:, 8]
 
     return X_train, X_val, Y_train, Y_val, dataset
 

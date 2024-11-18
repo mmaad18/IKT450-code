@@ -20,8 +20,8 @@ class FishDatasetRemote(Dataset):
         return len(self.data_list)
 
 
-    def __getitem__(self, index):
-        return self.X[index], self.T[index]
+    def __getitem__(self, idx):
+        return self.X[idx], self.T[idx]
 
 
     def label_processing(self):

@@ -42,8 +42,8 @@ def classify(X_train, Y_train, x0, K):
     for label in set(Y_train):
         probability = 0
 
-        for index in nearest_neighbors_indices:
-            probability += indicator_function(label, Y_train[index])
+        for idx in nearest_neighbors_indices:
+            probability += indicator_function(label, Y_train[idx])
 
         probabilities[label] = probability / K
 

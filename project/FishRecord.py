@@ -14,11 +14,11 @@ class FishRecord:
 
     def __init__(self, root_path: str, prefix: str, raw_line: str):
         parts = raw_line.split(',')
-        index = int(parts[1]) - 1
+        idx = int(parts[1]) - 1
         trajectory_str, fish_str = parts[0].split('_')
         self.trajectory_id = int(trajectory_str)
         self.fish_id = int(fish_str)
-        self.species = torch.nn.functional.one_hot(torch.tensor(index), num_classes=23).float()
+        self.species = torch.nn.functional.one_hot(torch.tensor(idx), num_classes=23).float()
         self.file_path = f"{root_path}/{prefix}_image/{prefix}_{parts[1].zfill(2)}/{prefix}_{trajectory_str.zfill(12)}_{fish_str}.png"
 
 

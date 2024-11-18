@@ -21,9 +21,9 @@ class Food11NeuralNetwork(nn.Module):
             nn.MaxPool2d(kernel_size=2),
             # 4x4x24
             nn.Flatten(),
-            nn.Linear(4*4*24, 4*23),
+            nn.Linear(4*4*24, 4*22),
             nn.Sigmoid(),
-            nn.Linear(4*23, 23),
+            nn.Linear(4*22, 11),
         )
 
         self._initialize_weights()

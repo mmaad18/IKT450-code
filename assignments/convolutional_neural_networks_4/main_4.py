@@ -65,8 +65,8 @@ def main():
     ])
 
     train_data = Food11Dataset("datasets/Food_11", "training", transform)
-    eval_data = Food11Dataset("datasets/Food_11", "evaluation", transform)
-    test_data = Food11Dataset("datasets/Food_11", "testing", transform)
+    eval_data = Food11Dataset("datasets/Food_11", "validation", transform)
+    test_data = Food11Dataset("datasets/Food_11", "evaluation", transform)
 
     batch_size = 100
     learning_rate = 0.1
