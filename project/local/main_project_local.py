@@ -5,7 +5,7 @@ from torch import nn
 
 from project.local.FishDatasetLocal import FishDatasetLocal
 from project.local.FishNetworkLocal import FishNeuralNetworkLocal
-from project.main_project_utils import plot_loss
+from utils import plot_loss
 from utils import display_info_project, load_device, dataset_to_loaders
 from torchvision import transforms
 
@@ -59,7 +59,7 @@ def main():
     learning_rate = 0.1
     momentum = 0.9
     batch_size = 100
-    epochs = 100
+    epochs = 1000
 
     transform = transforms.Compose([
         transforms.Resize(32),  # Resize the shorter side to 256 and keep the aspect ratio

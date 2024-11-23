@@ -4,10 +4,11 @@ import torch
 
 from PIL import Image
 from torch.utils.data import Dataset
+from torchvision.transforms import Compose
 
 
 class Food11Dataset(Dataset):
-    def __init__(self, root_dir, split, transform):
+    def __init__(self, root_dir: str, split: str, transform: Compose):
         self.root_dir = os.path.join(root_dir, split)
         self.transform = transform
 

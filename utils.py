@@ -1,5 +1,6 @@
 import time
 import torch
+from matplotlib import pyplot as plt
 from torch.utils.data import DataLoader, random_split
 
 
@@ -53,3 +54,18 @@ def dataset_to_loaders(dataset, batch_size: int, train_factor=0.7, val_factor=0.
     test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 
     return train_loader, eval_loader, test_loader
+
+
+def plot_loss(loss_type: str, losses, eta: float, alpha: float, batch_size: int):
+    plt.figure(figsize=(10, 6))
+    plt.plot(losses, label=f"{loss_type} over epochs", color='blue', linewidth=2)
+
+    plt.xlabel("Epoch", fontsize=16)
+    plt.ylabel(f"{loss_type}", fontsize=16)
+    plt.title(f"{loss_type} vs Epochs (eta={eta}, alpha={alpha}, batch_size={batch_size})", fontsize=20)
+
+    plt.tick_params(labelsize=16)
+    plt.legend(fontsize=16)
+    plt.grid(True)
+    plt.show()
+

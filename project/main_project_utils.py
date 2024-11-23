@@ -5,20 +5,6 @@ from PIL import Image
 from matplotlib import pyplot as plt
 
 
-def plot_loss(loss_type: str, losses, eta: float, alpha: float, batch_size: int):
-    plt.figure(figsize=(10, 6))
-    plt.plot(losses, label=f"{loss_type} over epochs", color='blue', linewidth=2)
-
-    plt.xlabel("Epoch", fontsize=16)
-    plt.ylabel(f"{loss_type}", fontsize=16)
-    plt.title(f"{loss_type} vs Epochs (eta={eta}, alpha={alpha}, batch_size={batch_size})", fontsize=20)
-
-    plt.tick_params(labelsize=16)
-    plt.legend(fontsize=16)
-    plt.grid(True)
-    plt.show()
-
-
 def images_size(root_path: str):
     sizes = []
     paths = []

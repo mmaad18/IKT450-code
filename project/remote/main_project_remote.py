@@ -5,7 +5,7 @@ from torch import nn
 
 from project.remote.FishDatasetRemote import FishDatasetRemote
 from project.remote.FishNetworkRemote import FishNeuralNetworkRemote
-from project.main_project_utils import plot_loss
+from utils import plot_loss
 from utils import display_info_project, load_device, dataset_to_loaders
 from torchvision import transforms
 

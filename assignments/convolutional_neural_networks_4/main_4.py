@@ -9,7 +9,7 @@ from assignments.convolutional_neural_networks_4.Food11Dataset import Food11Data
 from assignments.convolutional_neural_networks_4.Food11NeuralNetwork import Food11NeuralNetwork
 from utils import display_info, load_device
 
-from project.main_project_utils import plot_loss
+from utils import plot_loss
 
 
 def train_loop(dataloader, model, loss_fn, optimizer, device="cpu"):
