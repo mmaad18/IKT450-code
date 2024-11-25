@@ -1,5 +1,8 @@
+import os
 import unittest
 from collections import Counter
+from torchvision import transforms
+from PIL import Image
 
 import numpy as np
 
@@ -146,6 +149,8 @@ class MainProjectTest(unittest.TestCase):
         plt.tight_layout()
         plt.show()
 
+        self.assertEqual(len(sizes), 27370)
+
 
     def test_show_class_distribution(self):
         sizes, classes, paths = images_size_by_class(self.root_path)
@@ -181,6 +186,44 @@ class MainProjectTest(unittest.TestCase):
         plt.xticks(rotation=45, ha="right")
         plt.tight_layout()
         plt.show()
+
+        self.assertEqual(len(sizes), 27370)
+
+
+    def test_image_transform(self):
+        file_path = os.path.join(self.root_path, "fish_01\\fish_000000009598_05281.png")
+
+        transform = transforms.Compose([
+            transforms.Resize(32),  # Resize the shorter side to 256 and keep the aspect ratio
+            transforms.CenterCrop(32),
+            transforms.ToTensor()  # Convert the image to a tensor
+        ])
+
+        image = Image.open(file_path)
+        tensor = transform(image)
+        transformed_image = tensor.permute(1, 2, 0).numpy()
+
+        # Plot the original and transformed images side by side
+        plt.figure(figsize=(8, 4))
+
+        # Original image
+        plt.subplot(1, 2, 1)
+        plt.imshow(image)
+        plt.title("Original Image", fontsize=20)
+        plt.axis("off")
+
+        # Transformed image
+        plt.subplot(1, 2, 2)
+        plt.imshow(transformed_image)
+        plt.title("Transformed Image", fontsize=20)
+        plt.axis("off")
+
+        # Show the plots
+        plt.tight_layout()
+        plt.show()
+
+
+
 
 
 if __name__ == '__main__':
