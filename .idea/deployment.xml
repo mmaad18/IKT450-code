@@ -1,11 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" remoteFilesAllowedToDisappearOnAutoupload="false">
+  <component name="PublishConfigData" autoUpload="Always" remoteFilesAllowedToDisappearOnAutoupload="false" confirmBeforeUploading="false">
+    <option name="confirmBeforeUploading" value="false" />
     <serverData>
-      <paths name="ubuntu@209.20.158.22:22 key">
+      <paths name="ubuntu@192.222.56.246:22 key">
         <serverdata>
           <mappings>
-            <mapping deploy="/home/ubuntu/H100-File-System-1/IKT450-code" local="$PROJECT_DIR$" />
+            <mapping deploy="/home/ubuntu/Projects/IKT450-code" local="$PROJECT_DIR$" />
+          </mappings>
+          <excludedPaths>
+            <excludedPath local="true" path="$PROJECT_DIR$/datasets" />
+          </excludedPaths>
+        </serverdata>
+      </paths>
+      <paths name="ubuntu@192.222.56.246:22 key (2)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/ubuntu/Projects/IKT450-code" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>

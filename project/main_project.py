@@ -3,8 +3,8 @@ import time
 import torch
 from torch import nn
 
-from project.remote.FishDatasetRemote import FishDatasetRemote
-from project.remote.FishNetworkRemote import FishNeuralNetworkRemote
+from project.FishDataset import FishDatasetLocal
+from project.LeNet import FishNeuralNetworkLocal
 from utils import plot_loss
 from utils import display_info_project, load_device, dataset_to_loaders
 from torchvision import transforms
@@ -14,6 +14,8 @@ def train_loop(dataloader, model, loss_fn, optimizer, device="cpu"):
     model.train()
 
     for batch, (X, T) in enumerate(dataloader):
+        X, T = X.to(device), T.to(device)
+
         Y = model(X)
         loss = loss_fn(Y, T)
 
@@ -32,6 +34,8 @@ def test_loop(dataloader, model, loss_fn, device="cpu"):
     # Prevents PyTorch from calculating and storing gradients
     with torch.no_grad():
         for X, T in dataloader:
+            X, T = X.to(device), T.to(device)
+
             Y = model(X)
             pred_class = Y.argmax(dim=0)
             test_loss += loss_fn(Y, T).item()
@@ -49,26 +53,25 @@ def main():
     device = load_device()
     print(f"Using {device} device")
 
-    model = FishNeuralNetworkRemote().to(device)
-    model = torch.compile(model)
+    model = FishNeuralNetworkLocal().to(device)
     print(model)
 
-    learning_rate = 0.01
+    learning_rate = 0.1
     momentum = 0.9
     batch_size = 100
     epochs = 100
 
     transform = transforms.Compose([
-        transforms.Resize(128),  # Resize the shorter side to 256 and keep the aspect ratio
-        transforms.CenterCrop(128),
+        transforms.Resize(32),  # Resize the shorter side to 256 and keep the aspect ratio
+        transforms.CenterCrop(32),
         transforms.ToTensor()  # Convert the image to a tensor
     ])
 
-    fish_data = FishDatasetRemote("datasets/Fish_GT", "fish", transform, device)
+    fish_data = FishDatasetLocal("datasets/Fish_GT", "fish", transform)
     train_loader, eval_loader, test_loader = dataset_to_loaders(fish_data, batch_size)
 
     loss_fn = nn.MSELoss()
-    optimizer = torch.optim.NAdam(model.parameters(), lr=learning_rate)
+    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
 
     start = time.perf_counter()
 
