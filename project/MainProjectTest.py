@@ -1,18 +1,42 @@
 import os
 import unittest
 from collections import Counter
-from torchvision import transforms
+
+import torch
+from torchvision.io import decode_image
+from torchvision.transforms import v2
 from PIL import Image
 
 import numpy as np
 
-from project.main_project_utils import images_size, path_to_fish_id, images_size_by_class
+from project.main_project_utils import images_size, path_to_fish_id, images_size_by_class, crop_black_borders
 
 from matplotlib import pyplot as plt
 
 
 class MainProjectTest(unittest.TestCase):
-    root_path = "C:\\Users\\mmbio\\Documents\\GitHub\\IKT450-code\\datasets\\Fish_GT\\fish_image"
+    root_path = "C:\\Users\\mmbio\\Documents\\GitHub\\IKT450-code\\datasets\\Fish_GT\\image_cropped"
+
+
+    def test_crop_black_borders(self):
+        file_path = os.path.join(self.root_path, "fish_08\\fish_003269959708_05273.png")
+
+        cropped_image = crop_black_borders(file_path)
+
+        plt.figure(figsize=(8, 4))
+        plt.subplot(1, 2, 1)
+        plt.title("Original Image", fontsize=20)
+        plt.imshow(Image.open(file_path))
+        plt.axis("off")
+
+        plt.subplot(1, 2, 2)
+        plt.title("Cropped Image", fontsize=20)
+        plt.imshow(cropped_image)
+        plt.axis("off")
+
+        plt.show()
+
+
 
 
     def test_images_size(self):
@@ -38,6 +62,11 @@ class MainProjectTest(unittest.TestCase):
         min_width_size = sizes[min_width_idx]
         min_width_path = paths[min_width_idx]
         min_width_fish_id = path_to_fish_id(min_width_path)
+
+        print("min_height_path: ", min_height_path)
+        print("min_width_path: ", min_width_path)
+        print("max_height_path: ", max_height_path)
+        print("max_width_path: ", max_width_path)
 
         self.assertEqual(len(sizes), 27370)
         self.assertTrue(np.array_equal(max_height_size, np.array([428, 401])))
@@ -191,17 +220,25 @@ class MainProjectTest(unittest.TestCase):
 
 
     def test_image_transform(self):
-        file_path = os.path.join(self.root_path, "fish_01\\fish_000000009598_05281.png")
+        os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
-        transform = transforms.Compose([
-            transforms.Resize(32),  # Resize the shorter side to 256 and keep the aspect ratio
-            transforms.CenterCrop(32),
-            transforms.ToTensor()  # Convert the image to a tensor
+        #file_path = os.path.join(self.root_path, "fish_07\\fish_000017689596_03992.png")
+        file_path = os.path.join(self.root_path, "fish_08\\fish_003269959708_05273.png")
+
+        transforms = v2.Compose([
+            v2.ToDtype(torch.float32, scale=True),
+            v2.RandomResizedCrop(size=(64, 64)),
+            v2.RandomHorizontalFlip(p=0.5),
+            v2.ColorJitter(brightness=.25, hue=.15),
+            v2.GaussianNoise(mean=0.0 , sigma=0.05),
+            v2.GaussianBlur(kernel_size=(5, 5), sigma=(0.1, 1.)),
         ])
 
-        image = Image.open(file_path)
-        tensor = transform(image)
+        image = decode_image(file_path)
+        print(f"{type(image) = }, {image.dtype = }, {image.shape = }")
+        tensor = transforms(image)
         transformed_image = tensor.permute(1, 2, 0).numpy()
+        image = image.permute(1, 2, 0).numpy()
 
         # Plot the original and transformed images side by side
         plt.figure(figsize=(8, 4))
