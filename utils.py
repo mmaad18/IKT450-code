@@ -31,6 +31,8 @@ def display_info_project():
     print("Author: Mohamed Yahya Maad")
     print("Course: IKT450")
     print("Project: Fish Classification")
+    print("CUDA Available: " + str(torch.cuda.is_available()))
+    print("GPU Name: " + str(torch.cuda.get_device_name(0)))
 
 
 def load_device():
@@ -43,7 +45,7 @@ def load_device():
     )
 
 
-def dataset_to_loaders(dataset, batch_size: int, train_factor=0.7, val_factor=0.2, num_workers=0):
+def dataset_to_loaders_3(dataset, batch_size: int, train_factor=0.7, val_factor=0.2, num_workers=0):
     train_size = int(train_factor * len(dataset))
     val_size = int(val_factor * len(dataset))
     test_size = len(dataset) - train_size - val_size
@@ -54,6 +56,17 @@ def dataset_to_loaders(dataset, batch_size: int, train_factor=0.7, val_factor=0.
     test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 
     return train_loader, eval_loader, test_loader
+
+
+def dataset_to_loaders_2(dataset, batch_size: int, train_factor=0.8, num_workers=0):
+    train_size = int(train_factor * len(dataset))
+    val_size = len(dataset) - train_size
+    train_data, eval_data = random_split(dataset, [train_size, val_size])
+
+    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+    eval_loader = DataLoader(eval_data, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+
+    return train_loader, eval_loader
 
 
 def plot_loss(loss_type: str, losses, eta: float, alpha: float, batch_size: int):

@@ -41,6 +41,6 @@ class FishDatasetLocal(Dataset):
             image_X = Image.open(record.file_path)
             tensor_X = self.transform(image_X)
             X_list.append(tensor_X)
-            T_list.append(record.species)
+            T_list.append(record.species_idx)
 
         return X_list, T_list

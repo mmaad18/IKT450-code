@@ -6,7 +6,7 @@ from torch import nn
 from project.FishDataset import FishDatasetLocal
 from project.LeNet import FishNeuralNetworkLocal
 from utils import plot_loss
-from utils import display_info_project, load_device, dataset_to_loaders
+from utils import display_info_project, load_device, dataset_to_loaders_3
 from torchvision import transforms
 
 
@@ -37,14 +37,14 @@ def test_loop(dataloader, model, loss_fn, device="cpu"):
             X, T = X.to(device), T.to(device)
 
             Y = model(X)
-            pred_class = Y.argmax(dim=0)
+            pred_class = Y.argmax(dim=1)
             test_loss += loss_fn(Y, T).item()
             correct += (pred_class == T).type(torch.float).sum().item()
 
     test_loss /= num_batches
     correct /= size
 
-    return test_loss
+    return test_loss, correct
 
 
 def main():
@@ -56,10 +56,10 @@ def main():
     model = FishNeuralNetworkLocal().to(device)
     print(model)
 
-    learning_rate = 0.1
+    learning_rate = 0.001
     momentum = 0.9
     batch_size = 100
-    epochs = 100
+    epochs = 1000
 
     transform = transforms.Compose([
         transforms.Resize(32),  # Resize the shorter side to 256 and keep the aspect ratio
@@ -68,9 +68,9 @@ def main():
     ])
 
     fish_data = FishDatasetLocal("datasets/Fish_GT", "fish", transform)
-    train_loader, eval_loader, test_loader = dataset_to_loaders(fish_data, batch_size)
+    train_loader, eval_loader, test_loader = dataset_to_loaders_3(fish_data, batch_size)
 
-    loss_fn = nn.MSELoss()
+    loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
 
     start = time.perf_counter()
@@ -79,7 +79,7 @@ def main():
 
     for t in range(epochs):
         train_loop(train_loader, model, loss_fn, optimizer, device)
-        test_loss = test_loop(test_loader, model, loss_fn, device)
+        test_loss, _ = test_loop(test_loader, model, loss_fn, device)
         test_losses.append(test_loss)
 
         if t % 1 == 0:

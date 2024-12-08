@@ -21,16 +21,19 @@ class FishNeuralNetworkLocal(nn.Module):
             nn.MaxPool2d(kernel_size=2),
             # 4x4x24
             nn.Flatten(),
-            nn.Linear(4*4*24, 4*23),
+            nn.Linear(4*4*24, 4*24),
             nn.ReLU(),
-            nn.Linear(4*23, 23),
+            nn.Linear(4*24, 2*23),
+            nn.ReLU(),
+            nn.Linear(2*23, 23),
         )
 
         self._initialize_weights()
 
 
     def forward(self, x):
-        return self.network_stack(x)
+        logits = self.network_stack(x)
+        return logits
 
 
     def _initialize_weights(self):
