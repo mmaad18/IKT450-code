@@ -21,6 +21,11 @@ def time_function_out(func, *args, **kwargs):
     return result, diff
 
 
+def print_time(start, message="Elapsed time"):
+    end = time.perf_counter()
+    print(f"{message}: {end - start} seconds")
+
+
 def display_info(assignment_number: int):
     print("Author: Mohamed Yahya Maad")
     print("Course: IKT450")

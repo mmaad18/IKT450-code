@@ -50,8 +50,7 @@ class Food11Dataset(Dataset):
             image_X = Image.open(file_path)
             tensor_X = self.transform(image_X)
             X_list.append(tensor_X)
-            type = torch.nn.functional.one_hot(torch.tensor(label_idx), num_classes=11).float()
-            T_list.append(type)
+            T_list.append(label_idx)
 
         return X_list, T_list
 

@@ -2,7 +2,7 @@ import torch
 from torch import nn
 
 
-class FishNeuralNetworkLocal(nn.Module):
+class LeNet(nn.Module):
     def __init__(self):
         super().__init__()
 
@@ -32,8 +32,7 @@ class FishNeuralNetworkLocal(nn.Module):
 
 
     def forward(self, x):
-        logits = self.network_stack(x)
-        return logits
+        return self.network_stack(x)
 
 
     def _initialize_weights(self):

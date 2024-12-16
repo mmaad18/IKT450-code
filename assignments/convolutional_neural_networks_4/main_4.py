@@ -6,8 +6,8 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 
 from assignments.convolutional_neural_networks_4.Food11Dataset import Food11Dataset
-from assignments.convolutional_neural_networks_4.Food11NeuralNetwork import Food11NeuralNetwork
-from utils import display_info, load_device
+from assignments.convolutional_neural_networks_4.networks.LeNet import Food11NeuralNetwork
+from utils import display_info, load_device, print_time
 
 from utils import plot_loss
 
@@ -39,18 +39,19 @@ def test_loop(dataloader, model, loss_fn, device="cpu"):
             X, T = X.to(device), T.to(device)
 
             Y = model(X)
-            pred_class = Y.argmax(dim=0)
+            pred_class = Y.argmax(dim=1)
             test_loss += loss_fn(Y, T).item()
             correct += (pred_class == T).type(torch.float).sum().item()
 
     test_loss /= num_batches
     correct /= size
 
-    return test_loss
+    return test_loss, correct
 
 
 def main():
     display_info(4)
+    start = time.perf_counter()
 
     device = load_device()
     print(f"Using {device} device")
@@ -58,8 +59,15 @@ def main():
     model = Food11NeuralNetwork().to(device)
     print(model)
 
+    learning_rate = 0.001
+    momentum = 0.9
+    batch_size = 100
+    epochs = 100
+
+    print_time(start, "Loaded and compiled network")
+
     transform = transforms.Compose([
-        transforms.Resize(32),  # Resize the shorter side to 256 and keep the aspect ratio
+        transforms.Resize(32),  # Resize the shorter side to 32 and keep the aspect ratio
         transforms.CenterCrop(32),
         transforms.ToTensor()  # Convert the image to a tensor
     ])
@@ -68,25 +76,20 @@ def main():
     eval_data = Food11Dataset("datasets/Food_11", "validation", transform)
     test_data = Food11Dataset("datasets/Food_11", "evaluation", transform)
 
-    batch_size = 100
-    learning_rate = 0.1
-    momentum = 0.9
-    epochs = 100
+    print_time(start, "Loaded data")
 
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
     eval_loader = DataLoader(eval_data, batch_size=batch_size, shuffle=False)
     test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
 
-    loss_fn = nn.MSELoss()
+    loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
-
-    start = time.perf_counter()
 
     test_losses = []
 
     for t in range(epochs):
         train_loop(train_loader, model, loss_fn, optimizer, device)
-        test_loss = test_loop(test_loader, model, loss_fn, device)
+        test_loss, _ = test_loop(test_loader, model, loss_fn, device)
         test_losses.append(test_loss)
 
         if t % 1 == 0:
@@ -96,11 +99,10 @@ def main():
             print(f"Epoch {t}\n-------------------------------")
             print(f"Test Error: {test_loss}\n")
 
-            end = time.perf_counter()
-            print(f"Elapsed time: {end - start} seconds")
+            print_time(start)
 
     print("Done!")
-    plot_loss("MSE", test_losses, learning_rate, momentum, batch_size)
+    plot_loss("Cross Entropy", test_losses, learning_rate, momentum, batch_size)
 
 
 main()

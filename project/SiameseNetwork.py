@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
-from project.LeNet import FishNeuralNetworkLocal
+from project.LeNet import LeNet
 
 
 class SiameseNetwork(nn.Module):
@@ -9,7 +9,7 @@ class SiameseNetwork(nn.Module):
         super(SiameseNetwork, self).__init__()
 
         # Shared subnetwork
-        self.backbone = FishNeuralNetworkLocal()
+        self.backbone = LeNet()
 
     def forward(self, input1, input2):
         # Get embeddings for both inputs
