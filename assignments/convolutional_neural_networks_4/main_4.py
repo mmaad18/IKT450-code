@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 
 from assignments.convolutional_neural_networks_4.Food11Dataset import Food11Dataset
-from assignments.convolutional_neural_networks_4.networks.LeNet import Food11NeuralNetwork
+from assignments.convolutional_neural_networks_4.networks.LeNet import LeNet
 from utils import display_info, load_device, print_time
 
 from utils import plot_loss
@@ -56,13 +56,13 @@ def main():
     device = load_device()
     print(f"Using {device} device")
 
-    model = Food11NeuralNetwork().to(device)
+    model = LeNet().to(device)
     print(model)
 
-    learning_rate = 0.001
+    learning_rate = 0.01
     momentum = 0.9
     batch_size = 100
-    epochs = 100
+    epochs = 1000
 
     print_time(start, "Loaded and compiled network")
 
@@ -83,7 +83,8 @@ def main():
     test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
 
     loss_fn = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
+    #optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum, nesterov=True)
+    optimizer = torch.optim.Adagrad(model.parameters(), lr=learning_rate)
 
     test_losses = []
 
@@ -100,6 +101,9 @@ def main():
             print(f"Test Error: {test_loss}\n")
 
             print_time(start)
+
+        if test_loss > test_losses[0] and t > 100:
+            break
 
     print("Done!")
     plot_loss("Cross Entropy", test_losses, learning_rate, momentum, batch_size)

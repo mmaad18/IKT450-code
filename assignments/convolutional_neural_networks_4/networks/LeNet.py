@@ -2,7 +2,7 @@ import torch
 from torch import nn
 
 
-class Food11NeuralNetwork(nn.Module):
+class LeNet(nn.Module):
     def __init__(self):
         super().__init__()
 
@@ -21,9 +21,11 @@ class Food11NeuralNetwork(nn.Module):
             nn.MaxPool2d(kernel_size=2),
             # 4x4x24
             nn.Flatten(),
-            nn.Linear(4*4*24, 4*22),
+            nn.Linear(4*4*24, 4*24),
             nn.ReLU(),
-            nn.Linear(4*22, 11),
+            nn.Linear(4*24, 2*24),
+            nn.ReLU(),
+            nn.Linear(2*24, 11),
         )
 
         self._initialize_weights()
