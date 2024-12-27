@@ -4,9 +4,11 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 from torchvision import transforms
+from torchvision.transforms import v2
 
 from assignments.convolutional_neural_networks_4.Food11Dataset import Food11Dataset
 from assignments.convolutional_neural_networks_4.networks.LeNet import LeNet
+from assignments.convolutional_neural_networks_4.networks.ResNet import ResNet
 from utils import display_info, load_device, print_time
 
 from utils import plot_loss
@@ -56,20 +58,23 @@ def main():
     device = load_device()
     print(f"Using {device} device")
 
-    model = LeNet().to(device)
+    #model = LeNet().to(device)
+    model = ResNet().to(device)
     print(model)
 
-    learning_rate = 0.01
+    learning_rate = 0.1
     momentum = 0.9
-    batch_size = 100
-    epochs = 1000
+    batch_size = 256
+    epochs = 100
+    decay = 0.0001
 
     print_time(start, "Loaded and compiled network")
 
-    transform = transforms.Compose([
-        transforms.Resize(32),  # Resize the shorter side to 32 and keep the aspect ratio
-        transforms.CenterCrop(32),
-        transforms.ToTensor()  # Convert the image to a tensor
+    transform = v2.Compose([
+        v2.ToDtype(torch.float32, scale=True),
+        v2.Resize(size=96),
+        v2.CenterCrop(size=96),
+        v2.ToTensor()
     ])
 
     train_data = Food11Dataset("datasets/Food_11", "training", transform)
@@ -83,8 +88,8 @@ def main():
     test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
 
     loss_fn = nn.CrossEntropyLoss()
-    #optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum, nesterov=True)
-    optimizer = torch.optim.Adagrad(model.parameters(), lr=learning_rate)
+    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=decay)
+    #optimizer = torch.optim.Adagrad(model.parameters(), lr=learning_rate)
 
     test_losses = []
 
@@ -102,7 +107,7 @@ def main():
 
             print_time(start)
 
-        if test_loss > test_losses[0] and t > 100:
+        if test_loss > test_losses[0] and t > 25:
             break
 
     print("Done!")

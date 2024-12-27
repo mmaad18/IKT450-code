@@ -4,14 +4,15 @@ import numpy as np
 from PIL import Image, ImageChops
 
 
-def images_size(root_path: str):
+def images_size(root_path: str, file_type="png"):
     sizes = []
     paths = []
+    file_ending = "." + file_type
 
     for folder in os.listdir(root_path):
         folder_path = os.path.join(root_path, folder)
         for file in os.listdir(folder_path):
-            if file.endswith(".png"):
+            if file.endswith(file_ending):
                 file_path = os.path.join(folder_path, file)
                 with Image.open(file_path) as img:
                     sizes.append(img.size)
@@ -20,16 +21,17 @@ def images_size(root_path: str):
     return np.array(sizes), paths
 
 
-def images_size_by_class(root_path: str):
+def images_size_by_class(root_path: str, file_type="png"):
     sizes = []
     classes = []
     paths = []
+    file_ending = "." + file_type
 
     for folder in os.listdir(root_path):
         folder_path = os.path.join(root_path, folder)
         if os.path.isdir(folder_path):
             for file in os.listdir(folder_path):
-                if file.endswith(".png"):
+                if file.endswith(file_ending):
                     file_path = os.path.join(folder_path, file)
                     with Image.open(file_path) as img:
                         sizes.append(img.size)
