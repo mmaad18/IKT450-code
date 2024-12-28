@@ -65,7 +65,7 @@ def main():
     learning_rate = 0.1
     momentum = 0.9
     batch_size = 256
-    epochs = 100
+    epochs = 50
     decay = 0.0001
 
     print_time(start, "Loaded and compiled network")
@@ -92,6 +92,7 @@ def main():
     #optimizer = torch.optim.Adagrad(model.parameters(), lr=learning_rate)
 
     test_losses = []
+    counter = 0
 
     for t in range(epochs):
         train_loop(train_loader, model, loss_fn, optimizer, device)
@@ -107,11 +108,20 @@ def main():
 
             print_time(start)
 
-        if test_loss > test_losses[0] and t > 25:
+        if t > 5:
+            moving_average = sum(test_losses[-6:-2]) / 4
+            counter += 1
+
+            if counter > 10 and 0.999 * moving_average < test_loss < 1.001 * moving_average:
+                learning_rate *= 0.1
+                counter = 0
+                print(f"Learning rate reduced to {learning_rate}")
+
+        if t > 15 and test_loss > test_losses[0]:
             break
 
     print("Done!")
-    plot_loss("Cross Entropy", test_losses, learning_rate, momentum, batch_size)
+    plot_loss("Cross Entropy", test_losses[10:], learning_rate, momentum, batch_size)
 
 
 main()
