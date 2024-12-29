@@ -1,5 +1,6 @@
 import time
 
+import numpy as np
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
@@ -51,6 +52,11 @@ def test_loop(dataloader, model, loss_fn, device="cpu"):
     return test_loss, correct
 
 
+def learning_rate_function(epoch):
+    return 0.1 * np.log(10 * epoch)
+
+
+
 def main():
     display_info(4)
     start = time.perf_counter()
@@ -62,10 +68,10 @@ def main():
     model = ResNet().to(device)
     print(model)
 
-    learning_rate = 0.0001
+    learning_rate = 0.0002
     momentum = 0.9
     batch_size = 256
-    epochs = 200
+    epochs = 500
     decay = 0.0001
 
     print_time(start, "Loaded and compiled network")
@@ -91,31 +97,35 @@ def main():
     #optimizer = torch.optim.Adagrad(model.parameters(), lr=learning_rate)
 
     test_losses = []
-    counter = 0
+    count = 0
 
-    for t in range(epochs):
+    for epoch in range(epochs):
         optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=decay)
         train_loop(train_loader, model, loss_fn, optimizer, device)
         test_loss, _ = test_loop(test_loader, model, loss_fn, device)
         test_losses.append(test_loss)
 
-        if t % 10 == 0:
+        if epochs > 1 and epoch % 50 == 0:
+            plot_loss("Cross Entropy", test_losses, learning_rate, momentum, batch_size)
+
+        if epoch % 10 == 0:
             print(f"Memory allocated: {torch.cuda.memory_allocated() / 1e6} MB")
             print(f"Memory cached: {torch.cuda.memory_reserved() / 1e6} MB")
 
-        print(f"Epoch {t}\n-------------------------------")
+        print(f"Epoch {epoch}\n-------------------------------")
         print(f"Test Error: {test_loss}\n")
         print_time(start)
 
-        if t > 10:
-            counter += 1
+        count += 1
 
-            if counter > 10 and test_loss > test_losses[-2] * 1.2:
-                learning_rate *= 0.1
-                counter = 0
-                print(f"Learning rate reduced to {learning_rate}")
+        #if counter > 10 and test_loss > test_losses[-2] * 1.2:
+        if count % 25 == 0:
 
-        if t > 15 and test_loss > test_losses[0]:
+            learning_rate *= learning_rate_function(epoch)
+            count = 0
+            print(f"Learning rate reduced to {learning_rate}")
+
+        if epoch > 15 and test_loss > test_losses[0]:
             break
 
     print("Done!")
