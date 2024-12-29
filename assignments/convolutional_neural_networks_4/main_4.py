@@ -62,10 +62,10 @@ def main():
     model = ResNet().to(device)
     print(model)
 
-    learning_rate = 0.1
+    learning_rate = 0.0001
     momentum = 0.9
     batch_size = 256
-    epochs = 50
+    epochs = 200
     decay = 0.0001
 
     print_time(start, "Loaded and compiled network")
@@ -88,31 +88,29 @@ def main():
     test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
 
     loss_fn = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=decay)
     #optimizer = torch.optim.Adagrad(model.parameters(), lr=learning_rate)
 
     test_losses = []
     counter = 0
 
     for t in range(epochs):
+        optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=decay)
         train_loop(train_loader, model, loss_fn, optimizer, device)
         test_loss, _ = test_loop(test_loader, model, loss_fn, device)
         test_losses.append(test_loss)
 
-        if t % 1 == 0:
+        if t % 10 == 0:
             print(f"Memory allocated: {torch.cuda.memory_allocated() / 1e6} MB")
             print(f"Memory cached: {torch.cuda.memory_reserved() / 1e6} MB")
 
-            print(f"Epoch {t}\n-------------------------------")
-            print(f"Test Error: {test_loss}\n")
+        print(f"Epoch {t}\n-------------------------------")
+        print(f"Test Error: {test_loss}\n")
+        print_time(start)
 
-            print_time(start)
-
-        if t > 5:
-            moving_average = sum(test_losses[-6:-2]) / 4
+        if t > 10:
             counter += 1
 
-            if counter > 10 and 0.999 * moving_average < test_loss < 1.001 * moving_average:
+            if counter > 10 and test_loss > test_losses[-2] * 1.2:
                 learning_rate *= 0.1
                 counter = 0
                 print(f"Learning rate reduced to {learning_rate}")

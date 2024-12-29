@@ -1,9 +1,9 @@
 import torch
-from torch import nn
+from torch import nn, Tensor
 
 
-def conv3x3(in_channels: int, out_channels: int, stride: int = 1, groups: int = 1, dilation: int = 1) -> nn.Conv2d:
-    return nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, groups=groups, dilation=dilation, bias=False)
+def conv3x3(in_channels: int, out_channels: int, stride: int = 1) -> nn.Conv2d:
+    return nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, groups=1, dilation=1, bias=False)
 
 
 def conv1x1(in_channels: int, out_channels: int, stride: int = 1) -> nn.Conv2d:
@@ -14,22 +14,30 @@ class BasicBlock(nn.Module):
     def __init__(self, in_channels: int, out_channels: int, stride: int = 1):
         super().__init__()
 
-        self.block = nn.Sequential(
-            nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=3, stride=stride, padding=1),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(),
-            nn.Conv2d(in_channels=out_channels, out_channels=out_channels, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(out_channels),
-        )
+        self.conv1 = conv3x3(in_channels, out_channels, stride)
+        self.bn1 = nn.BatchNorm2d(out_channels)
+        self.relu = nn.ReLU(inplace=True)
+        self.conv2 = conv3x3(out_channels, out_channels)
+        self.bn2 = nn.BatchNorm2d(out_channels)
 
-        self.shortcut = nn.Sequential(nn.Identity())
+    def forward(self, x: Tensor) -> Tensor:
+        identity = x
 
-    def forward(self, x):
-        return self.block(x) + self.shortcut(x)
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.relu(out)
+
+        out = self.conv2(out)
+        out = self.bn2(out)
+
+        out += identity
+        out = self.relu(out)
+
+        return out
 
 
 class ResNet(nn.Module):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self.network_stack = nn.Sequential(
@@ -40,19 +48,13 @@ class ResNet(nn.Module):
             nn.MaxPool2d(kernel_size=2),
             # 48x48x32
             BasicBlock(in_channels=32, out_channels=32),
-            nn.ReLU(),
             BasicBlock(in_channels=32, out_channels=32),
-            nn.ReLU(),
             BasicBlock(in_channels=32, out_channels=32),
-            nn.ReLU(),
             BasicBlock(in_channels=32, out_channels=32),
-            nn.ReLU(),
             BasicBlock(in_channels=32, out_channels=32),
-            nn.ReLU(),
-            nn.AvgPool2d(kernel_size=2),
+            nn.AdaptiveAvgPool2d((1, 1)),
             nn.Flatten(),
-            nn.Linear(24*24*32, 1000),
-            nn.Softmax(dim=1),
+            nn.Linear(32, 11),
         )
 
         self._initialize_weights()
