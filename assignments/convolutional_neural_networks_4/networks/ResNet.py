@@ -11,17 +11,17 @@ def conv1x1(in_channels: int, out_channels: int, stride: int = 1) -> nn.Conv2d:
 
 
 class BasicBlock(nn.Module):
-    def __init__(self, in_channels: int, out_channels: int):
+    def __init__(self, in_channels: int):
         super().__init__()
 
-        self.conv1 = conv3x3(in_channels, out_channels)
-        self.bn1 = nn.BatchNorm2d(out_channels)
+        self.conv1 = conv3x3(in_channels, in_channels)
+        self.bn1 = nn.BatchNorm2d(in_channels)
         self.relu = nn.ReLU(inplace=True)
-        self.conv2 = conv3x3(out_channels, out_channels)
-        self.bn2 = nn.BatchNorm2d(out_channels)
+        self.conv2 = conv3x3(in_channels, in_channels)
+        self.bn2 = nn.BatchNorm2d(in_channels)
 
     def forward(self, x: Tensor) -> Tensor:
-        identity = x
+        shortcut = x
 
         out = self.conv1(x)
         out = self.bn1(out)
@@ -30,7 +30,7 @@ class BasicBlock(nn.Module):
         out = self.conv2(out)
         out = self.bn2(out)
 
-        out += identity
+        out += shortcut
         out = self.relu(out)
 
         return out
@@ -40,7 +40,7 @@ class ResizeBlock(nn.Module):
     def __init__(self, in_channels: int):
         super().__init__()
 
-        out_channels = 2
+        out_channels = 2 * in_channels
 
         self.conv1 = conv3x3(in_channels, out_channels, stride=2)
         self.bn1 = nn.BatchNorm2d(out_channels)
@@ -48,8 +48,13 @@ class ResizeBlock(nn.Module):
         self.conv2 = conv3x3(out_channels, out_channels)
         self.bn2 = nn.BatchNorm2d(out_channels)
 
+        self.shortcut = nn.Sequential(
+            conv1x1(in_channels, out_channels, stride=2),
+            nn.BatchNorm2d(out_channels)
+        )
+
     def forward(self, x: Tensor) -> Tensor:
-        identity = x
+        shortcut = self.shortcut(x)
 
         out = self.conv1(x)
         out = self.bn1(out)
@@ -58,7 +63,7 @@ class ResizeBlock(nn.Module):
         out = self.conv2(out)
         out = self.bn2(out)
 
-        out += identity
+        out += shortcut
         out = self.relu(out)
 
         return out
@@ -73,23 +78,20 @@ class ResNet(nn.Module):
             nn.Conv2d(in_channels=3, out_channels=64, kernel_size=7, padding=3),
             nn.BatchNorm2d(64),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
             # 48x48x64
-            BasicBlock(in_channels=64, out_channels=64),
-            BasicBlock(in_channels=64, out_channels=128),
-            nn.MaxPool2d(kernel_size=2),
+            BasicBlock(in_channels=64),
+            BasicBlock(in_channels=64),
             # 24x24x128
-            BasicBlock(in_channels=128, out_channels=128),
-            BasicBlock(in_channels=128, out_channels=256),
-            nn.MaxPool2d(kernel_size=2),
+            ResizeBlock(in_channels=64),
+            BasicBlock(in_channels=128),
             # 12x12x256
-            BasicBlock(in_channels=256, out_channels=256),
-            BasicBlock(in_channels=256, out_channels=512),
-            nn.MaxPool2d(kernel_size=2),
+            ResizeBlock(in_channels=128),
+            BasicBlock(in_channels=256),
             # 6x6x512
-            BasicBlock(in_channels=512, out_channels=512),
-            BasicBlock(in_channels=512, out_channels=512),
-            nn.AdaptiveAvgPool2d((1, 1)),
+            ResizeBlock(in_channels=256),
+            BasicBlock(in_channels=512),
+            nn.AdaptiveAvgPool2d(output_size=(1, 1)),
             nn.Flatten(),
             nn.Linear(512, 11),
         )
@@ -102,9 +104,22 @@ class ResNet(nn.Module):
 
 
     def _initialize_weights(self):
+        """
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.Linear):
+                torch.nn.init.kaiming_normal_(m.weight, nonlinearity='relu')
+                torch.nn.init.zeros_(m.bias)
+        """
+
         for layer in self.network_stack:
             if isinstance(layer, nn.Linear):
                 torch.nn.init.kaiming_normal_(layer.weight, nonlinearity='relu')
                 torch.nn.init.zeros_(layer.bias)
+
 
 
