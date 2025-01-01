@@ -3,23 +3,26 @@ import unittest
 from collections import Counter
 
 import torch
+from torch.utils.data import DataLoader
 from torchvision.io import decode_image
 from torchvision.transforms import v2
 from PIL import Image
 
 import numpy as np
 
+from assignments.convolutional_neural_networks_4.Food11Dataset import Food11Dataset
 from project.main_project_utils import images_size, path_to_fish_id, images_size_by_class, crop_black_borders
 
 from matplotlib import pyplot as plt
 
 
 class Main4Test(unittest.TestCase):
-    root_path = "C:\\Users\\mmbio\\Documents\\GitHub\\IKT450-code\\datasets\\Food_11\\training"
+    training_root_path = "C:\\Users\\mmbio\\Documents\\GitHub\\IKT450-code\\datasets\\Food_11\\training"
+    root_path = "C:\\Users\\mmbio\\Documents\\GitHub\\IKT450-code\\datasets\\Food_11"
 
 
     def test_images_size_histogram(self):
-        sizes, paths = images_size(self.root_path, "jpg")
+        sizes, paths = images_size(self.training_root_path, "jpg")
         widths = sizes[:, 0]
         heights = sizes[:, 1]
 
@@ -48,7 +51,7 @@ class Main4Test(unittest.TestCase):
 
 
     def test_images_size_scatter_plot(self):
-        sizes, paths = images_size(self.root_path, "jpg")
+        sizes, paths = images_size(self.training_root_path, "jpg")
         widths = sizes[:, 0]
         heights = sizes[:, 1]
 
@@ -67,7 +70,7 @@ class Main4Test(unittest.TestCase):
 
     def test_images_size_scatter_plot_by_class(self):
         # Get image sizes and class information
-        sizes, classes, paths = images_size_by_class(self.root_path, "jpg")
+        sizes, classes, paths = images_size_by_class(self.training_root_path, "jpg")
         widths = sizes[:, 0]
         heights = sizes[:, 1]
 
@@ -95,7 +98,7 @@ class Main4Test(unittest.TestCase):
 
 
     def test_show_class_distribution_log(self):
-        sizes, classes, paths = images_size_by_class(self.root_path, "jpg")
+        sizes, classes, paths = images_size_by_class(self.training_root_path, "jpg")
 
         # Count the number of images per class
         class_counts = Counter(classes)
@@ -120,7 +123,7 @@ class Main4Test(unittest.TestCase):
 
 
     def test_show_class_distribution(self):
-        sizes, classes, paths = images_size_by_class(self.root_path, "jpg")
+        sizes, classes, paths = images_size_by_class(self.training_root_path, "jpg")
 
         # Count the number of images per class
         class_counts = Counter(classes)
@@ -160,23 +163,33 @@ class Main4Test(unittest.TestCase):
     def test_image_transform(self):
         os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
-        file_path = os.path.join(self.root_path, "Bread\\0.jpg")
+        #file_path = os.path.join(self.root_path, "Bread\\0.jpg")
+        #file_path = os.path.join(self.root_path, "Dairy product\\0.jpg")
+        #file_path = os.path.join(self.root_path, "Dessert\\0.jpg")
+        #file_path = os.path.join(self.root_path, "Egg\\0.jpg")
+        #file_path = os.path.join(self.root_path, "Fried food\\0.jpg")
+        #file_path = os.path.join(self.root_path, "Meat\\0.jpg")
+        #file_path = os.path.join(self.root_path, "Noodles-Pasta\\0.jpg")
         #file_path = os.path.join(self.root_path, "Rice\\0.jpg")
+        #file_path = os.path.join(self.root_path, "Seafood\\0.jpg")
+        #file_path = os.path.join(self.root_path, "Soup\\0.jpg")
+        file_path = os.path.join(self.training_root_path, "Vegetable-Fruit\\0.jpg")
 
-        transforms = v2.Compose([
+        transform = v2.Compose([
             v2.ToDtype(torch.float32, scale=True),
-            v2.Resize(size=128),
-            v2.CenterCrop(size=128),
-            #v2.RandomResizedCrop(size=(64, 64)),
-            #v2.RandomHorizontalFlip(p=0.5),
-            #v2.ColorJitter(brightness=.25, hue=.15),
-            #v2.GaussianNoise(mean=0.0 , sigma=0.05),
-            #v2.GaussianBlur(kernel_size=(5, 5), sigma=(0.1, 1.)),
+            v2.RandomResizedCrop(size=96, scale=(0.8, 1.0)),
+            v2.RandomHorizontalFlip(p=0.5),
+            v2.ColorJitter(brightness=0.25, hue=0.15),
+            v2.RandomChoice([
+                v2.GaussianNoise(mean=0.0, sigma=0.05),
+                v2.GaussianBlur(kernel_size=(5, 5), sigma=(0.1, 1.0))
+            ]),
+            v2.Normalize(mean=[0.5607, 0.4520, 0.3385], std=[0.2598, 0.2625, 0.2692])
         ])
 
         image = decode_image(file_path)
         print(f"{type(image) = }, {image.dtype = }, {image.shape = }")
-        tensor = transforms(image)
+        tensor = transform(image)
         transformed_image = tensor.permute(1, 2, 0).numpy()
         image = image.permute(1, 2, 0).numpy()
 
@@ -186,18 +199,47 @@ class Main4Test(unittest.TestCase):
         # Original image
         plt.subplot(1, 2, 1)
         plt.imshow(image)
-        plt.title("Original Image", fontsize=20)
+        plt.title(f"Original ({image.shape[0]}, {image.shape[1]})", fontsize=20)
         plt.axis("off")
 
         # Transformed image
         plt.subplot(1, 2, 2)
         plt.imshow(transformed_image)
-        plt.title("Transformed Image", fontsize=20)
+        plt.title(f"Transformed ({transformed_image.shape[0]}, {transformed_image.shape[1]})", fontsize=20)
         plt.axis("off")
 
         # Show the plots
         plt.tight_layout()
         plt.show()
+
+
+    def test_calculate_mean_and_std_dev(self):
+        transform = v2.Compose([
+            v2.ToDtype(torch.float32, scale=True),
+            v2.Resize(size=96),
+            v2.CenterCrop(size=96),
+            v2.ToTensor()
+        ])
+
+        # Load the dataset with minimal preprocessing
+        dataset = Food11Dataset(self.root_path, "training", transform)
+        dataloader = DataLoader(dataset, batch_size=256, shuffle=False)
+
+        # Initialize sums and squared sums
+        mean = torch.zeros(3)
+        std = torch.zeros(3)
+
+        for images, _ in dataloader:
+            # Sum over batch and spatial dimensions (height and width)
+            mean += images.mean(dim=[0, 2, 3])
+            std += images.std(dim=[0, 2, 3])
+
+        # Divide by the number of batches to get mean and std
+        mean /= len(dataloader)
+        std /= len(dataloader)
+
+        print(f"Mean: {mean}")
+        print(f"Std: {std}")
 
 
 if __name__ == '__main__':

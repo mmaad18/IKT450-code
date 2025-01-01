@@ -3,6 +3,7 @@ import time
 import numpy as np
 import torch
 from torch import nn
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from torchvision.transforms import v2
@@ -34,7 +35,7 @@ def test_loop(dataloader, model, loss_fn, device="cpu"):
     model.eval()
     size = len(dataloader.dataset)
     num_batches = len(dataloader)
-    test_loss, correct = 0, 0
+    test_loss, accuracy = 0.0, 0.0
 
     # Prevents PyTorch from calculating and storing gradients
     with torch.no_grad():
@@ -44,17 +45,12 @@ def test_loop(dataloader, model, loss_fn, device="cpu"):
             Y = model(X)
             pred_class = Y.argmax(dim=1)
             test_loss += loss_fn(Y, T).item()
-            correct += (pred_class == T).type(torch.float).sum().item()
+            accuracy += (pred_class == T).type(torch.float).sum().item()
 
     test_loss /= num_batches
-    correct /= size
+    accuracy /= size
 
-    return test_loss, correct
-
-
-def learning_rate_function(epoch):
-    return 0.1 * np.log(10 * epoch)
-
+    return test_loss, accuracy
 
 
 def main():
@@ -68,7 +64,7 @@ def main():
     model = ResNet().to(device)
     print(model)
 
-    learning_rate = 0.0002
+    learning_rate = 1e-3
     momentum = 0.9
     batch_size = 256
     epochs = 500
@@ -78,9 +74,15 @@ def main():
 
     transform = v2.Compose([
         v2.ToDtype(torch.float32, scale=True),
-        v2.Resize(size=96),
-        v2.CenterCrop(size=96),
-        v2.ToTensor()
+        v2.RandomResizedCrop(size=96, scale=(0.8, 1.0)),
+        v2.RandomHorizontalFlip(p=0.5),
+        v2.ColorJitter(brightness=0.25, hue=0.15),
+        v2.ToTensor(),
+        v2.RandomChoice([
+            v2.GaussianNoise(mean=0.0, sigma=0.05),
+            v2.GaussianBlur(kernel_size=(5, 5), sigma=(0.1, 1.0))
+        ]),
+        v2.Normalize(mean=[0.5607, 0.4520, 0.3385], std=[0.2598, 0.2625, 0.2692]),
     ])
 
     train_data = Food11Dataset("datasets/Food_11", "training", transform)
@@ -95,35 +97,36 @@ def main():
 
     loss_fn = nn.CrossEntropyLoss()
     #optimizer = torch.optim.Adagrad(model.parameters(), lr=learning_rate)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=decay)
+    #optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=decay)
+    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=10, min_lr=1e-7)
 
     test_losses = []
-    count = 0
+    accuracies = []
 
     for epoch in range(epochs):
-        optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=decay)
         train_loop(train_loader, model, loss_fn, optimizer, device)
-        test_loss, _ = test_loop(test_loader, model, loss_fn, device)
+        test_loss, accuracy = test_loop(test_loader, model, loss_fn, device)
         test_losses.append(test_loss)
+        accuracies.append(accuracy)
 
-        if epochs > 1 and epoch % 50 == 0:
+        scheduler.step(test_loss)
+
+        learning_rate = optimizer.param_groups[0]['lr']
+
+        print(f"-----------------| Epoch: {epoch} |-----------------")
+        print(f"Learning Rate: {learning_rate}")
+        print_time(start)
+        print(f"Test Loss: {test_loss}")
+        print(f"Accuracy: {accuracy}\n")
+
+        if epochs > 10 and epoch % 50 == 0:
             plot_loss("Cross Entropy", test_losses, learning_rate, momentum, batch_size)
+            plot_loss("Accuracy", accuracies, learning_rate, momentum, batch_size)
 
         if epoch % 10 == 0:
             print(f"Memory allocated: {torch.cuda.memory_allocated() / 1e6} MB")
             print(f"Memory cached: {torch.cuda.memory_reserved() / 1e6} MB")
-
-        print(f"Epoch {epoch}\n-------------------------------")
-        print(f"Test Error: {test_loss}\n")
-        print_time(start)
-
-        count += 1
-
-        #if counter > 10 and test_loss > test_losses[-2] * 1.2:
-        if count % 25 == 0:
-
-            learning_rate *= learning_rate_function(epoch)
-            count = 0
-            print(f"Learning rate reduced to {learning_rate}")
 
         if epoch > 15 and test_loss > test_losses[0]:
             break

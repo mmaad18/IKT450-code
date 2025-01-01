@@ -104,20 +104,13 @@ class ResNet(nn.Module):
 
 
     def _initialize_weights(self):
-        """
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
-            elif isinstance(m, nn.BatchNorm2d):
-                nn.init.constant_(m.weight, 1)
-                nn.init.constant_(m.bias, 0)
-            elif isinstance(m, nn.Linear):
-                torch.nn.init.kaiming_normal_(m.weight, nonlinearity='relu')
-                torch.nn.init.zeros_(m.bias)
-        """
-
         for layer in self.network_stack:
-            if isinstance(layer, nn.Linear):
+            if isinstance(layer, nn.Conv2d):
+                nn.init.kaiming_normal_(layer.weight, mode="fan_out", nonlinearity="relu")
+            elif isinstance(layer, nn.BatchNorm2d):
+                nn.init.constant_(layer.weight, 1)
+                nn.init.constant_(layer.bias, 0)
+            elif isinstance(layer, nn.Linear):
                 torch.nn.init.kaiming_normal_(layer.weight, nonlinearity='relu')
                 torch.nn.init.zeros_(layer.bias)
 
