@@ -1,8 +1,13 @@
 import numpy as np
 from matplotlib import pyplot as plt
+from numpy.typing import NDArray
 
 
-def load_data(file_path: str, seed: int = 7, split_ratio: float = 0.8):
+def load_data(
+        file_path: str,
+        seed: int=7,
+        split_ratio: float=0.8
+) -> tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
     np.random.seed(seed)
 
     # Load pima indians dataset
@@ -19,7 +24,7 @@ def load_data(file_path: str, seed: int = 7, split_ratio: float = 0.8):
     return X_train, X_val, Y_train, Y_val, dataset
 
 
-def plot_evaluation(evaluation, x_label, title_append=""):
+def plot_evaluation(evaluation: NDArray[np.float64], x_label: str, title_append: str="") -> None:
     fig, axs = plt.subplots(3, 1, figsize=(10, 15))
 
     evaluation_size = evaluation.shape[0]

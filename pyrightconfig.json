@@ -1,0 +1,9 @@
+{
+  "include": [
+    "assignments/nearest_neighbour_1"
+  ],
+  "pythonVersion": "3.11",
+  "typeCheckingMode": "strict",
+  "reportMissingImports": true,
+  "reportUnusedVariable": true
+}
