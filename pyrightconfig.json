@@ -1,6 +1,6 @@
 {
   "include": [
-    "assignments/nearest_neighbour_1"
+    "assignments"
   ],
   "pythonVersion": "3.11",
   "typeCheckingMode": "strict",

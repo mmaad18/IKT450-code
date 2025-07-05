@@ -25,7 +25,7 @@ def load_data(
 
 
 def plot_evaluation(evaluation: NDArray[np.float64], x_label: str, title_append: str="") -> None:
-    fig, axs = plt.subplots(3, 1, figsize=(10, 15))
+    _, axs = plt.subplots(3, 1, figsize=(10, 15))
 
     evaluation_size = evaluation.shape[0]
 

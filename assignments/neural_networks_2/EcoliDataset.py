@@ -1,27 +1,28 @@
 import numpy as np
 import torch
+from numpy.typing import NDArray
 from torch.utils.data import Dataset
 
 class EcoliDataset(Dataset):
-    def __init__(self, file_path, training=False, split_ratio=0.8):
+    def __init__(self, file_path: str, training: bool=False, split_ratio: float=0.8) -> None:
         self.file_path = file_path
         self.training = training
         self.split_ratio = split_ratio
         self.X, self.Y = self.data_preprocessing(file_path)
 
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.Y)
 
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
         X = self.X[idx]
         Y = self.Y[idx]
 
         return torch.tensor(X, dtype=torch.float32), torch.tensor(Y, dtype=torch.float32)
 
 
-    def data_preprocessing(self, file_path: str):
+    def data_preprocessing(self, file_path: str) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
         with open(file_path, 'r') as file:
             data_list = [line.strip().split() for line in file]
 

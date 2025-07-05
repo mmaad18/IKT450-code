@@ -1,8 +1,13 @@
 import numpy as np
-from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt  # pyright: ignore [reportUnknownMemberType]
+from numpy.typing import NDArray
 
 
-def data_preprocessing(file_path: str, seed: int = 15, split_ratio: float = 0.8):
+def data_preprocessing(
+        file_path: str,
+        seed: int = 15,
+        split_ratio: float = 0.8
+) -> tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
     np.random.seed(seed)
 
     with open(file_path, 'r') as file:
@@ -39,7 +44,13 @@ def data_preprocessing(file_path: str, seed: int = 15, split_ratio: float = 0.8)
     return X_train, X_val, Y_train.reshape(-1, 1), Y_val.reshape(-1, 1)
 
 
-def shuffle_data(X_train, X_val, Y_train, Y_val, seed):
+def shuffle_data(
+        X_train: NDArray[np.float64],
+        X_val: NDArray[np.float64],
+        Y_train: NDArray[np.float64],
+        Y_val: NDArray[np.float64],
+        seed: int
+) -> tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
     np.random.seed(seed)
 
     # Shuffle training data
@@ -55,7 +66,13 @@ def shuffle_data(X_train, X_val, Y_train, Y_val, seed):
     return X_train_shuffled, X_val_shuffled, Y_train_shuffled, Y_val_shuffled
 
 
-def plot_loss(loss_type, losses, eta, alpha, batch_size):
+def plot_loss(
+        loss_type: str,
+        losses: list[float],
+        eta: float,
+        alpha: float,
+        batch_size: int
+) -> None:
     plt.figure(figsize=(10, 6))
     plt.plot(losses, label=f"{loss_type} over epochs", color='blue', linewidth=2)
 
@@ -69,7 +86,14 @@ def plot_loss(loss_type, losses, eta, alpha, batch_size):
     plt.show()
 
 
-def plot_loss_multiple(loss_type, losses_list, eta_list, alpha_list, batch_size_list, size="1"):
+def plot_loss_multiple(
+        loss_type: str,
+        losses_list: list[list[float]],
+        eta_list: list[float],
+        alpha_list: list[float],
+        batch_size_list: list[int],
+        size: str="1"
+) -> None:
     plt.figure(figsize=(10, 6))
 
     # Plot each RMS curve
