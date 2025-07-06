@@ -48,10 +48,10 @@ def test_loop(dataloader, model, loss_fn, device="cpu"):
 def main():
     display_info(2)
 
-    device = load_device()
+    device: torch.device = load_device()
     print(f"Using {device} device")
 
-    model = EcoliNeuralNetwork().to(device)
+    model = EcoliNeuralNetwork(device)
     print(model)
 
     training_data = EcoliDataset("assignments/neural_networks_2/ecoli.data", training=True)

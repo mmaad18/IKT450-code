@@ -4,35 +4,18 @@ from matplotlib import pyplot as plt
 from torch.utils.data import DataLoader, random_split
 
 
-def time_function(func, *args, **kwargs):
-    start = time.perf_counter()
-    result = func(*args, **kwargs)
-    end = time.perf_counter()
-    print(f"{func.__name__} took {end - start} seconds")
-    return result
-
-
-def time_function_out(func, *args, **kwargs):
-    start = time.perf_counter()
-    result = func(*args, **kwargs)
-    end = time.perf_counter()
-    diff = end - start
-    print(f"{func.__name__} took {diff} seconds")
-    return result, diff
-
-
-def print_time(start, message="Elapsed time"):
+def print_time(start: float, message: str="Elapsed time") -> None:
     end = time.perf_counter()
     print(f"{message}: {end - start} seconds")
 
 
-def display_info(assignment_number: int):
+def display_info(assignment_number: int) -> None:
     print("Author: Mohamed Yahya Maad")
     print("Course: IKT450")
     print(f"Assignment: {assignment_number}")
 
 
-def display_info_project():
+def display_info_project() -> None:
     print("Author: Mohamed Yahya Maad")
     print("Course: IKT450")
     print("Project: Fish Classification")
@@ -40,41 +23,50 @@ def display_info_project():
     print("GPU Name: " + str(torch.cuda.get_device_name(0)))
 
 
-def load_device():
-    return (
-        "cuda"
-        if torch.cuda.is_available()
-        else "mps"
-        if torch.backends.mps.is_available()
-        else "cpu"
+def load_device() -> torch.device:
+    return torch.device(
+        "cuda" if torch.cuda.is_available() else
+        "mps" if torch.backends.mps.is_available() else
+        "cpu"
     )
 
 
-def dataset_to_loaders_3(dataset, batch_size: int, train_factor=0.7, val_factor=0.2, num_workers=0):
+def dataset_to_loaders_3(
+        dataset: Dataset[torch.Tensor],
+        batch_size: int,
+        train_factor: float=0.7,
+        val_factor: float=0.2,
+        num_workers: int=0
+) -> tuple[DataLoader[torch.Tensor], DataLoader[torch.Tensor], DataLoader[torch.Tensor]]:
     train_size = int(train_factor * len(dataset))
     val_size = int(val_factor * len(dataset))
     test_size = len(dataset) - train_size - val_size
     train_data, eval_data, test_data = random_split(dataset, [train_size, val_size, test_size])
 
-    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=num_workers)
-    eval_loader = DataLoader(eval_data, batch_size=batch_size, shuffle=False, num_workers=num_workers)
-    test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+    train_loader: DataLoader[torch.Tensor] = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+    eval_loader: DataLoader[torch.Tensor] = DataLoader(eval_data, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+    test_loader: DataLoader[torch.Tensor] = DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 
     return train_loader, eval_loader, test_loader
 
 
-def dataset_to_loaders_2(dataset, batch_size: int, train_factor=0.8, num_workers=0):
+def dataset_to_loaders_2(
+        dataset: Dataset[torch.Tensor],
+        batch_size: int,
+        train_factor: float=0.8,
+        num_workers: int=0
+) -> tuple[DataLoader[torch.Tensor], DataLoader[torch.Tensor]]:
     train_size = int(train_factor * len(dataset))
     val_size = len(dataset) - train_size
     train_data, eval_data = random_split(dataset, [train_size, val_size])
 
-    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=num_workers)
-    eval_loader = DataLoader(eval_data, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+    train_loader: DataLoader[torch.Tensor] = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+    eval_loader: DataLoader[torch.Tensor] = DataLoader(eval_data, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 
     return train_loader, eval_loader
 
 
-def plot_loss(loss_type: str, losses, eta: float, alpha: float, batch_size: int):
+def plot_loss(loss_type: str, losses: list[float], eta: float, alpha: float, batch_size: int) -> None:
     plt.figure(figsize=(10, 6))
     plt.plot(losses, label=f"{loss_type} over epochs", color='blue', linewidth=2)
 

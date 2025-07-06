@@ -4,7 +4,7 @@ from torch import nn
 
 class EcoliNeuralNetwork(nn.Module):
     def __init__(self, device: torch.device) -> None:
-        super().__init__()
+        super().__init__()  # pyright: ignore[reportUnknownMemberType]
         self.device = device
 
         self.network_stack = nn.Sequential(

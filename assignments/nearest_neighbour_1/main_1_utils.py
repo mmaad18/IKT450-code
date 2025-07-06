@@ -25,7 +25,7 @@ def load_data(
 
 
 def plot_evaluation(evaluation: NDArray[np.float64], x_label: str, title_append: str="") -> None:
-    _, axs = plt.subplots(3, 1, figsize=(10, 15))
+    _, axs = plt.subplots(3, 1, figsize=(10, 15))  # pyright: ignore [reportUnknownMemberType]
 
     evaluation_size = evaluation.shape[0]
 
@@ -64,5 +64,5 @@ def plot_evaluation(evaluation: NDArray[np.float64], x_label: str, title_append:
     axs[2].grid(True)
 
     plt.tight_layout()
-    plt.show()
+    plt.show()  # pyright: ignore [reportUnknownMemberType]
 

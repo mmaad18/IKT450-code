@@ -3,7 +3,7 @@ import torch
 from numpy.typing import NDArray
 from torch.utils.data import Dataset
 
-class EcoliDataset(Dataset):
+class EcoliDataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
     def __init__(self, file_path: str, training: bool=False, split_ratio: float=0.8) -> None:
         self.file_path = file_path
         self.training = training
@@ -19,7 +19,7 @@ class EcoliDataset(Dataset):
         X = self.X[idx]
         Y = self.Y[idx]
 
-        return torch.tensor(X, dtype=torch.float32), torch.tensor(Y, dtype=torch.float32)
+        return torch.tensor(X, dtype=torch.float64), torch.tensor(Y, dtype=torch.float64)
 
 
     def data_preprocessing(self, file_path: str) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
@@ -43,8 +43,8 @@ class EcoliDataset(Dataset):
             filtered_data = filtered_data[idx:]
 
         # Split into input (X) and output (Y) variables
-        X = filtered_data[:, 1:8].astype(float)
-        Y = filtered_data[:, 8].astype(float)
+        X = filtered_data[:, 1:8].astype(np.float64)
+        Y = filtered_data[:, 8].astype(np.float64)
 
         return X, Y.reshape(-1, 1)
 
