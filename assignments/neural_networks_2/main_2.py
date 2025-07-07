@@ -14,7 +14,7 @@ Functions
 def xavier_normal(input_size: int, layer_size: int) -> NDArray[np.float64]:
     std_dev = np.sqrt(2.0 / (input_size + layer_size))
     normal_dist = norm(loc=0.0, scale=std_dev)
-    return normal_dist.rvs(size=(input_size, layer_size))
+    return normal_dist.rvs(size=(input_size, layer_size))  # pyright: ignore [reportUnknownVariableType, reportUnknownMemberType]
 
 def sigmoid(X: NDArray[np.float64]) -> NDArray[np.float64]:
     return 1 / (1 + np.exp(-X))
@@ -69,7 +69,7 @@ def network_forward(
 
 def network_backward(
         Ws: list[NDArray[np.float64]],
-        D_W_Ls: NDArray[np.float64],
+        D_W_Ls: list[NDArray[np.float64]],
         Ys: list[NDArray[np.float64]],
         Yds: list[NDArray[np.float64]],
         T: NDArray[np.float64],
@@ -95,7 +95,7 @@ def train(
         X: NDArray[np.float64],
         T: NDArray[np.float64],
         Ws: list[NDArray[np.float64]],
-        D_W_Ls: NDArray[np.float64],
+        D_W_Ls: list[NDArray[np.float64]],
         eta: float,
         alpha: float
 ) -> list[NDArray[np.float64]]:
@@ -115,7 +115,7 @@ def main() -> None:
     alpha_list = [0.9, 1.35, 1.8]
     batch_size_list = [10, 10, 10]
 
-    MSEs_list = []
+    MSEs_list: list[list[float]] = []
 
     for s in range(len(eta_list)):
         eta = eta_list[s]
@@ -130,7 +130,7 @@ def main() -> None:
 
         D_W_Ls = copy.deepcopy(Ws)
 
-        MSEs = []
+        MSEs: list[float] = []
 
         for e in range(1000):
             for i in range(0, len(X_train), batch_size):
@@ -139,7 +139,7 @@ def main() -> None:
             Ys, _ = network_forward(Ws, X_val)
 
             error = Ys[-1] - Y_val
-            MSE = np.mean(error**2)
+            MSE = float(np.mean(error**2))
             MSEs.append(MSE)
 
             X_train, X_val, Y_train, Y_val = shuffle_data(X_train, X_val, Y_train, Y_val, e)

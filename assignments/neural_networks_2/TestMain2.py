@@ -4,7 +4,7 @@ import numpy as np
 
 from assignments.neural_networks_2.main_2 import sigmoid, hidden_layer, network_forward, network_backward, sigmoid_prime
 
-class Main2Test(unittest.TestCase):
+class TestMain2(unittest.TestCase):
     def test_sigmoid(self):
         X = np.array([
             [1, 2, 3],

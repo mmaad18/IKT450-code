@@ -1,7 +1,11 @@
+# pyright: reportUnknownMemberType=false
+
 import time
 import torch
 from matplotlib import pyplot as plt
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import Dataset, DataLoader, random_split
+from collections.abc import Sized
+from typing import cast
 
 
 def print_time(start: float, message: str="Elapsed time") -> None:
@@ -38,9 +42,9 @@ def dataset_to_loaders_3(
         val_factor: float=0.2,
         num_workers: int=0
 ) -> tuple[DataLoader[torch.Tensor], DataLoader[torch.Tensor], DataLoader[torch.Tensor]]:
-    train_size = int(train_factor * len(dataset))
-    val_size = int(val_factor * len(dataset))
-    test_size = len(dataset) - train_size - val_size
+    train_size = int(train_factor * len(cast(Sized, dataset)))
+    val_size = int(val_factor * len(cast(Sized, dataset)))
+    test_size = len(cast(Sized, dataset)) - train_size - val_size
     train_data, eval_data, test_data = random_split(dataset, [train_size, val_size, test_size])
 
     train_loader: DataLoader[torch.Tensor] = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=num_workers)
@@ -56,8 +60,8 @@ def dataset_to_loaders_2(
         train_factor: float=0.8,
         num_workers: int=0
 ) -> tuple[DataLoader[torch.Tensor], DataLoader[torch.Tensor]]:
-    train_size = int(train_factor * len(dataset))
-    val_size = len(dataset) - train_size
+    train_size = int(train_factor * len(cast(Sized, dataset)))
+    val_size = len(cast(Sized, dataset)) - train_size
     train_data, eval_data = random_split(dataset, [train_size, val_size])
 
     train_loader: DataLoader[torch.Tensor] = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=num_workers)

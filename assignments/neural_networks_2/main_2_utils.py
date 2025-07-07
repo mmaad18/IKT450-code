@@ -1,5 +1,7 @@
+# pyright: reportUnknownMemberType=false
+
 import numpy as np
-from matplotlib import pyplot as plt  # pyright: ignore [reportUnknownMemberType]
+from matplotlib import pyplot as plt
 from numpy.typing import NDArray
 
 
