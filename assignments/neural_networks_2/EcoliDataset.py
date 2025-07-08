@@ -19,7 +19,7 @@ class EcoliDataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
         X = self.X[idx]
         Y = self.Y[idx]
 
-        return torch.tensor(X, dtype=torch.float64), torch.tensor(Y, dtype=torch.float64)
+        return torch.tensor(X, dtype=torch.float32), torch.tensor(Y, dtype=torch.float32)
 
 
     def data_preprocessing(self, file_path: str) -> tuple[NDArray[np.float64], NDArray[np.float64]]:

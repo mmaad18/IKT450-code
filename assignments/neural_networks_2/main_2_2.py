@@ -1,5 +1,9 @@
+# pyright: reportConstantRedefinition=false
+from typing import cast, Sized
+
 import torch
 from torch import nn
+from torch.nn import MSELoss
 from torch.utils.data import DataLoader
 
 from assignments.neural_networks_2.EcoliDataset import EcoliDataset
@@ -8,24 +12,35 @@ from assignments.neural_networks_2.main_2_utils import plot_loss
 from utils import display_info, load_device
 
 
-def train_loop(dataloader, model, loss_fn, optimizer, device="cpu"):
+def train_loop(
+        dataloader: DataLoader[tuple[torch.Tensor, torch.Tensor]],
+        model: EcoliNeuralNetwork,
+        loss_fn: MSELoss,
+        optimizer: torch.optim.Optimizer,
+        device: torch.device
+) -> None:
     model.train()
 
-    for batch, (X, Y) in enumerate(dataloader):
+    for _, (X, Y) in enumerate(dataloader):
         X, Y = X.to(device), Y.to(device)
 
         pred = model(X)
         loss = loss_fn(pred, Y)
 
         # Backpropagation
+        optimizer.zero_grad() # Reset gradients to prevent accumulation
         loss.backward()
         optimizer.step()
-        optimizer.zero_grad() # Reset gradients to prevent accumulation
 
 
-def test_loop(dataloader, model, loss_fn, device="cpu"):
+def test_loop(
+        dataloader: DataLoader[tuple[torch.Tensor, torch.Tensor]],
+        model: EcoliNeuralNetwork,
+        loss_fn: MSELoss,
+        device: torch.device
+) -> float:
     model.eval()
-    size = len(dataloader.dataset)
+    size = len(cast(Sized, dataloader.dataset))  # pyright: ignore [reportUnknownArgumentType]
     num_batches = len(dataloader)
     test_loss, correct = 0, 0
 
@@ -68,7 +83,7 @@ def main():
     loss_fn = nn.MSELoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
 
-    test_losses = []
+    test_losses: list[float] = []
 
     for t in range(epochs):
         train_loop(train_dataloader, model, loss_fn, optimizer, device)

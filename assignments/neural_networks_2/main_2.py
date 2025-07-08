@@ -1,10 +1,8 @@
 import copy
 
 import numpy as np
-from scipy.stats import norm  # pyright: ignore [reportMissingTypeStubs]
 
 from assignments.neural_networks_2.main_2_utils import data_preprocessing, plot_loss_multiple, shuffle_data
-from utils import display_info
 from numpy.typing import NDArray
 from typing import Callable
 
@@ -13,8 +11,8 @@ Functions
 """
 def xavier_normal(input_size: int, layer_size: int) -> NDArray[np.float64]:
     std_dev = np.sqrt(2.0 / (input_size + layer_size))
-    normal_dist = norm(loc=0.0, scale=std_dev)
-    return normal_dist.rvs(size=(input_size, layer_size))  # pyright: ignore [reportUnknownVariableType, reportUnknownMemberType]
+    return np.random.normal(loc=0.0, scale=std_dev, size=(input_size, layer_size))
+
 
 def sigmoid(X: NDArray[np.float64]) -> NDArray[np.float64]:
     return 1 / (1 + np.exp(-X))
@@ -106,8 +104,6 @@ def train(
 
 
 def main() -> None:
-    display_info(2)
-
     X_train, X_val, Y_train, Y_val = data_preprocessing("assignments/neural_networks_2/ecoli.data")
 
     # Settings lists
