@@ -141,8 +141,8 @@ def main() -> None:
 
         evaluation_list.append(evaluation)
 
-    #plot_loss_multiple("MSE", MSEs_list, eta_list, alpha_list, batch_size_list, size="3, 2, 1")
-    plot_evaluation(evaluation_list[0], "Epoch", f" (abc)")
+    idx = 1
+    plot_evaluation(evaluation_list[idx], "Epoch", f" (η={eta_list[idx]}, α={alpha_list[idx]}, batch_size={batch_size_list[idx]})")
 
 
 main()

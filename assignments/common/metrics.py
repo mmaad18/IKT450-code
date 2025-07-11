@@ -17,19 +17,19 @@ Metrics
 * RMSE: Root Mean Square Error
 """
 def _confusion_matrix(Y_val: NDArray[np.float64], Y_pred: NDArray[np.float64]) -> tuple[int, int, int, int]:
-    tp = 0
-    tn = 0
-    fp = 0
-    fn = 0
+    tp = 1
+    tn = 1
+    fp = 1
+    fn = 1
 
     for i in range(len(Y_val)):
-        if Y_val[i] == 1 and Y_pred[i] == 1:
+        if Y_val[i] > 0.5 and Y_pred[i] > 0.5:
             tp += 1
-        elif Y_val[i] == 0 and Y_pred[i] == 0:
+        elif Y_val[i] <= 0.5 and Y_pred[i] <= 0.5:
             tn += 1
-        elif Y_val[i] == 0 and Y_pred[i] == 1:
+        elif Y_val[i] <= 0.5 and Y_pred[i] > 0.5:
             fp += 1
-        elif Y_val[i] == 1 and Y_pred[i] == 0:
+        elif Y_val[i] > 0.5 and Y_pred[i] <= 0.5:
             fn += 1
 
     return tp, tn, fp, fn
