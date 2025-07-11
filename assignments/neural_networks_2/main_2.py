@@ -2,7 +2,8 @@ import copy
 
 import numpy as np
 
-from assignments.neural_networks_2.main_2_utils import data_preprocessing, plot_loss_multiple, shuffle_data
+from assignments.common.metrics import evaluate_metrics, plot_evaluation
+from assignments.neural_networks_2.main_2_utils import data_preprocessing, shuffle_data
 from numpy.typing import NDArray
 from typing import Callable
 
@@ -111,7 +112,7 @@ def main() -> None:
     alpha_list = [0.9, 1.35, 1.8]
     batch_size_list = [10, 10, 10]
 
-    MSEs_list: list[list[float]] = []
+    evaluation_list: list[NDArray[np.float64]] = []
 
     for s in range(len(eta_list)):
         eta = eta_list[s]
@@ -126,23 +127,22 @@ def main() -> None:
 
         D_W_Ls = copy.deepcopy(Ws)
 
-        MSEs: list[float] = []
+        evaluation = np.zeros((1000, 10))
 
-        for e in range(1000):
+        for e in range(0, 1000):
             for i in range(0, len(X_train), batch_size):
                 Ws = train(X_train[i:i+batch_size], Y_train[i:i+batch_size], Ws, D_W_Ls, eta, alpha)
 
             Ys, _ = network_forward(Ws, X_val)
 
-            error = Ys[-1] - Y_val
-            MSE = float(np.mean(error**2))
-            MSEs.append(MSE)
+            evaluation[e - 1] = evaluate_metrics(Y_val, Ys[-1])
 
             X_train, X_val, Y_train, Y_val = shuffle_data(X_train, X_val, Y_train, Y_val, e)
 
-        MSEs_list.append(MSEs)
+        evaluation_list.append(evaluation)
 
-    plot_loss_multiple("MSE", MSEs_list, eta_list, alpha_list, batch_size_list, size="3, 2, 1")
+    #plot_loss_multiple("MSE", MSEs_list, eta_list, alpha_list, batch_size_list, size="3, 2, 1")
+    plot_evaluation(evaluation_list[0], "Epoch", f" (abc)")
 
 
 main()
