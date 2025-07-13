@@ -1,21 +1,23 @@
 # pyright: reportConstantRedefinition=false
 from typing import cast, Sized
 
+import numpy as np
 import torch
 from torch import nn
-from torch.nn import MSELoss
+from torch.nn import BCEWithLogitsLoss
 from torch.utils.data import DataLoader
+from numpy.typing import NDArray
 
+from assignments.common.metrics import evaluate_metrics, plot_evaluation
 from assignments.neural_networks_2.EcoliDataset import EcoliDataset
 from assignments.neural_networks_2.EcoliNeuralNetwork import EcoliNeuralNetwork
-from assignments.neural_networks_2.main_2_utils import plot_loss
 from utils import display_info, load_device
 
 
 def train_loop(
         dataloader: DataLoader[tuple[torch.Tensor, torch.Tensor]],
         model: EcoliNeuralNetwork,
-        loss_fn: MSELoss,
+        loss_fn: BCEWithLogitsLoss,
         optimizer: torch.optim.Optimizer,
         device: torch.device
 ) -> None:
@@ -36,28 +38,29 @@ def train_loop(
 def test_loop(
         dataloader: DataLoader[tuple[torch.Tensor, torch.Tensor]],
         model: EcoliNeuralNetwork,
-        loss_fn: MSELoss,
         device: torch.device
-) -> float:
+) -> NDArray[np.float64]:
     model.eval()
-    size = len(cast(Sized, dataloader.dataset))  # pyright: ignore [reportUnknownArgumentType]
-    num_batches = len(dataloader)
-    test_loss, correct = 0, 0
 
-    # Prevents PyTorch from calculating and storing gradients
+    size = len(cast(Sized, dataloader.dataset))
+    Y_val = np.zeros((size,))
+    Y_pred = np.zeros((size,))
+
+    b = 0
+
     with torch.no_grad():
         for X, Y in dataloader:
             X, Y = X.to(device), Y.to(device)
 
             pred = model(X)
             pred_class = (pred > 0.5).float()
-            test_loss += loss_fn(pred, Y).item()
-            correct += (pred_class == Y).type(torch.float).sum().item()
 
-    test_loss /= num_batches
-    correct /= size
+            Y_val[b:b + len(Y)] = Y.cpu().flatten().numpy()
+            Y_pred[b:b + len(pred)] = pred_class.cpu().flatten().numpy()
 
-    return test_loss
+            b += len(Y)
+
+    return evaluate_metrics(Y_val, Y_pred)
 
 
 def main():
@@ -80,22 +83,23 @@ def main():
     train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
     test_dataloader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
 
-    loss_fn = nn.MSELoss()
+    loss_fn = nn.BCEWithLogitsLoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
 
-    test_losses: list[float] = []
+    evaluation: NDArray[np.float64] = np.zeros((epochs, 10))
 
-    for t in range(epochs):
+    for e in range(epochs):
         train_loop(train_dataloader, model, loss_fn, optimizer, device)
-        test_loss = test_loop(test_dataloader, model, loss_fn, device)
-        test_losses.append(test_loss)
+        evaluation[e] = test_loop(test_dataloader, model, device)
 
-        if t % 10 == 0:
-            print(f"Epoch {t}\n-------------------------------")
-            print(f"Test Error: {test_loss}\n")
+        if e % 10 == 0:
+            MSE= evaluation[e][8]
+            print(f"Epoch {e}\n-------------------------------")
+            print(f"Test MSE: {MSE}\n")
+
 
     print("Done!")
-    plot_loss("MSE", test_losses, learning_rate, momentum, batch_size)
+    plot_evaluation(evaluation, "Epoch", f" (η={learning_rate}, α={momentum}, batch_size={batch_size})")
 
 
 main()

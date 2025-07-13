@@ -135,7 +135,8 @@ def main() -> None:
 
             Ys, _ = network_forward(Ws, X_val)
 
-            evaluation[e - 1] = evaluate_metrics(Y_val, Ys[-1])
+            Y_pred_bin = (Ys[-1] > 0.5).astype(np.float64)
+            evaluation[e] = evaluate_metrics(Y_val, Y_pred_bin)
 
             X_train, X_val, Y_train, Y_val = shuffle_data(X_train, X_val, Y_train, Y_val, e)
 

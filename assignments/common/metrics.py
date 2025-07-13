@@ -23,13 +23,13 @@ def _confusion_matrix(Y_val: NDArray[np.float64], Y_pred: NDArray[np.float64]) -
     fn = 1
 
     for i in range(len(Y_val)):
-        if Y_val[i] > 0.5 and Y_pred[i] > 0.5:
+        if Y_val[i] == 1.0 and Y_pred[i] == 1.0:
             tp += 1
-        elif Y_val[i] <= 0.5 and Y_pred[i] <= 0.5:
+        elif Y_val[i] == 0.0 and Y_pred[i] == 0.0:
             tn += 1
-        elif Y_val[i] <= 0.5 and Y_pred[i] > 0.5:
+        elif Y_val[i] == 0.0 and Y_pred[i] == 1.0:
             fp += 1
-        elif Y_val[i] > 0.5 and Y_pred[i] <= 0.5:
+        elif Y_val[i] == 1.0 and Y_pred[i] == 0.0:
             fn += 1
 
     return tp, tn, fp, fn

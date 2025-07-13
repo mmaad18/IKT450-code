@@ -13,7 +13,6 @@ class EcoliNeuralNetwork(nn.Module):
             nn.Linear(3, 2),
             nn.Sigmoid(),
             nn.Linear(2, 1),
-            nn.Sigmoid()
         ).to(self.device)
 
         self._initialize_weights()
