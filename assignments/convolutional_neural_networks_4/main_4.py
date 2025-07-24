@@ -1,73 +1,86 @@
+# pyright: reportConstantRedefinition=false, reportMissingTypeStubs=false
 import time
+from typing import cast, Sized
 
 import numpy as np
 import torch
+from numpy.typing import NDArray
 from torch import nn
+from torch.nn import CrossEntropyLoss
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
-from torchvision import transforms
 from torchvision.transforms import v2
 
+from assignments.common.metrics import evaluate_metrics, plot_evaluation
 from assignments.convolutional_neural_networks_4.Food11Dataset import Food11Dataset
 from assignments.convolutional_neural_networks_4.networks.LeNet import LeNet
-from assignments.convolutional_neural_networks_4.networks.ResNet import ResNet
 from utils import display_info, load_device, print_time
 
-from utils import plot_loss
 
-
-def train_loop(dataloader, model, loss_fn, optimizer, device="cpu"):
+def train_loop(
+        dataloader: DataLoader[tuple[torch.Tensor, torch.Tensor]],
+        model: nn.Module,
+        loss_fn: CrossEntropyLoss,
+        optimizer: torch.optim.Optimizer,
+        device: torch.device
+) -> None:
     model.train()
 
-    for batch, (X, T) in enumerate(dataloader):
+    for _, (X, T) in enumerate(dataloader):
         X, T = X.to(device), T.to(device)
 
         Y = model(X)
-        loss = loss_fn(Y, T)
+        Y_class = Y.argmax(dim=1)
+        loss = loss_fn(Y_class, T)
 
         # Backpropagation
+        optimizer.zero_grad() # Reset gradients to prevent accumulation
         loss.backward()
         optimizer.step()
-        optimizer.zero_grad() # Reset gradients to prevent accumulation
 
 
-def test_loop(dataloader, model, loss_fn, device="cpu"):
+def test_loop(
+        dataloader: DataLoader[tuple[torch.Tensor, torch.Tensor]],
+        model: nn.Module,
+        device: torch.device
+) -> NDArray[np.float64]:
     model.eval()
-    size = len(dataloader.dataset)
-    num_batches = len(dataloader)
-    test_loss, accuracy = 0.0, 0.0
 
-    # Prevents PyTorch from calculating and storing gradients
+    size = len(cast(Sized, dataloader.dataset))
+    Y_val = np.zeros((size,))
+    Y_pred = np.zeros((size,))
+
+    b = 0  # Batch index
+
     with torch.no_grad():
         for X, T in dataloader:
             X, T = X.to(device), T.to(device)
 
-            Y = model(X)
-            pred_class = Y.argmax(dim=1)
-            test_loss += loss_fn(Y, T).item()
-            accuracy += (pred_class == T).type(torch.float).sum().item()
+            pred = model(X)
+            pred_class = (pred > 0.5).float()
 
-    test_loss /= num_batches
-    accuracy /= size
+            Y_val[b:b + len(T)] = T.cpu().flatten().numpy()
+            Y_pred[b:b + len(pred)] = pred_class.cpu().flatten().numpy()
 
-    return test_loss, accuracy
+            b += len(T)
+
+        return evaluate_metrics(Y_val, Y_pred)
 
 
 def main():
     display_info(4)
     start = time.perf_counter()
 
-    device = load_device()
+    device: torch.device = load_device()
     print(f"Using {device} device")
 
-    #model = LeNet().to(device)
-    model = ResNet().to(device)
+    model = LeNet().to(device)
     print(model)
 
     learning_rate = 1e-3
     momentum = 0.9
     batch_size = 256
-    epochs = 500
+    epochs = 50
     decay = 0.0001
 
     print_time(start, "Loaded and compiled network")
@@ -86,53 +99,41 @@ def main():
     ])
 
     train_data = Food11Dataset("datasets/Food_11", "training", transform)
-    eval_data = Food11Dataset("datasets/Food_11", "validation", transform)
+    # eval_data = Food11Dataset("datasets/Food_11", "validation", transform)
     test_data = Food11Dataset("datasets/Food_11", "evaluation", transform)
 
     print_time(start, "Loaded data")
 
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
-    eval_loader = DataLoader(eval_data, batch_size=batch_size, shuffle=False)
+    # eval_loader = DataLoader(eval_data, batch_size=batch_size, shuffle=False)
     test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
 
     loss_fn = nn.CrossEntropyLoss()
-    #optimizer = torch.optim.Adagrad(model.parameters(), lr=learning_rate)
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=decay)
-    #optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=decay)
     scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=10, min_lr=1e-7)
 
-    test_losses = []
-    accuracies = []
+    evaluation: NDArray[np.float64] = np.zeros((epochs, 10))
 
-    for epoch in range(epochs):
+    for e in range(epochs):
         train_loop(train_loader, model, loss_fn, optimizer, device)
-        test_loss, accuracy = test_loop(test_loader, model, loss_fn, device)
-        test_losses.append(test_loss)
-        accuracies.append(accuracy)
+        evaluation[e] = test_loop(test_loader, model, device)
 
-        scheduler.step(test_loss)
+        scheduler.step(evaluation[e][8])
 
         learning_rate = optimizer.param_groups[0]['lr']
 
-        print(f"-----------------| Epoch: {epoch} |-----------------")
+        print(f"-----------------| Epoch: {e} |-----------------")
         print(f"Learning Rate: {learning_rate}")
         print_time(start)
-        print(f"Test Loss: {test_loss}")
-        print(f"Accuracy: {accuracy}\n")
+        print(f"Test MSE: {evaluation[e][8]}")
+        print(f"Test Accuracy: {evaluation[e][7]}\n")
 
-        if epochs > 10 and epoch % 50 == 0:
-            plot_loss("Cross Entropy", test_losses, learning_rate, momentum, batch_size)
-            plot_loss("Accuracy", accuracies, learning_rate, momentum, batch_size)
-
-        if epoch % 10 == 0:
+        if e % 10 == 0:
             print(f"Memory allocated: {torch.cuda.memory_allocated() / 1e6} MB")
             print(f"Memory cached: {torch.cuda.memory_reserved() / 1e6} MB")
 
-        if epoch > 15 and test_loss > test_losses[0]:
-            break
-
     print("Done!")
-    plot_loss("Cross Entropy", test_losses[10:], learning_rate, momentum, batch_size)
+    plot_evaluation(evaluation, "Epoch", f" (η={learning_rate}, α={momentum}, batch_size={batch_size})")
 
 
 main()

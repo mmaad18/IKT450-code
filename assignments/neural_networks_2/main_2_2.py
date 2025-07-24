@@ -23,11 +23,11 @@ def train_loop(
 ) -> None:
     model.train()
 
-    for _, (X, Y) in enumerate(dataloader):
-        X, Y = X.to(device), Y.to(device)
+    for _, (X, T) in enumerate(dataloader):
+        X, T = X.to(device), T.to(device)
 
-        pred = model(X)
-        loss = loss_fn(pred, Y)
+        Y = model(X)
+        loss = loss_fn(Y, T)
 
         # Backpropagation
         optimizer.zero_grad() # Reset gradients to prevent accumulation
@@ -46,19 +46,19 @@ def test_loop(
     Y_val = np.zeros((size,))
     Y_pred = np.zeros((size,))
 
-    b = 0
+    b = 0  # Batch index
 
     with torch.no_grad():
-        for X, Y in dataloader:
-            X, Y = X.to(device), Y.to(device)
+        for X, T in dataloader:
+            X, T = X.to(device), T.to(device)
 
             pred = model(X)
             pred_class = (pred > 0.5).float()
 
-            Y_val[b:b + len(Y)] = Y.cpu().flatten().numpy()
+            Y_val[b:b + len(T)] = T.cpu().flatten().numpy()
             Y_pred[b:b + len(pred)] = pred_class.cpu().flatten().numpy()
 
-            b += len(Y)
+            b += len(T)
 
     return evaluate_metrics(Y_val, Y_pred)
 

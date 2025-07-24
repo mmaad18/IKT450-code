@@ -8,18 +8,18 @@ class EcoliDataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
         self.file_path = file_path
         self.training = training
         self.split_ratio = split_ratio
-        self.X, self.Y = self.data_preprocessing(file_path)
+        self.X, self.T = self.data_preprocessing(file_path)
 
 
     def __len__(self) -> int:
-        return len(self.Y)
+        return len(self.T)
 
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
         X = self.X[idx]
-        Y = self.Y[idx]
+        T = self.T[idx]
 
-        return torch.tensor(X, dtype=torch.float32), torch.tensor(Y, dtype=torch.float32)
+        return torch.tensor(X, dtype=torch.float32), torch.tensor(T, dtype=torch.float32)
 
 
     def data_preprocessing(self, file_path: str) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
@@ -42,9 +42,9 @@ class EcoliDataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
         else:
             filtered_data = filtered_data[idx:]
 
-        # Split into input (X) and output (Y) variables
+        # Split into input (X) and output (T) variables
         X = filtered_data[:, 1:8].astype(np.float64)
-        Y = filtered_data[:, 8].astype(np.float64)
+        T = filtered_data[:, 8].astype(np.float64)
 
-        return X, Y.reshape(-1, 1)
+        return X, T.reshape(-1, 1)
 
