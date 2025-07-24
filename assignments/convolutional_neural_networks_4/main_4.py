@@ -7,7 +7,7 @@ import torch
 from numpy.typing import NDArray
 from torch import nn
 from torch.nn import CrossEntropyLoss
-from torch.optim.lr_scheduler import ReduceLROnPlateau
+# from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
 from torchvision.transforms import v2
 
@@ -27,11 +27,10 @@ def train_loop(
     model.train()
 
     for _, (X, T) in enumerate(dataloader):
-        X, T = X.to(device), T.to(device)
+        X, T = X.to(device), T.to(device).long()
 
         Y = model(X)
-        Y_class = Y.argmax(dim=1)
-        loss = loss_fn(Y_class, T)
+        loss = loss_fn(Y, T)
 
         # Backpropagation
         optimizer.zero_grad() # Reset gradients to prevent accumulation
@@ -54,10 +53,10 @@ def test_loop(
 
     with torch.no_grad():
         for X, T in dataloader:
-            X, T = X.to(device), T.to(device)
+            X, T = X.to(device), T.to(device).long()
 
             pred = model(X)
-            pred_class = (pred > 0.5).float()
+            pred_class = pred.argmax(dim=1)
 
             Y_val[b:b + len(T)] = T.cpu().flatten().numpy()
             Y_pred[b:b + len(pred)] = pred_class.cpu().flatten().numpy()
@@ -74,13 +73,13 @@ def main():
     device: torch.device = load_device()
     print(f"Using {device} device")
 
-    model = LeNet().to(device)
+    model = LeNet(device)
     print(model)
 
-    learning_rate = 1e-3
+    learning_rate = 1e-4
     momentum = 0.9
     batch_size = 256
-    epochs = 50
+    epochs = 200
     decay = 0.0001
 
     print_time(start, "Loaded and compiled network")
@@ -90,7 +89,8 @@ def main():
         v2.RandomResizedCrop(size=96, scale=(0.8, 1.0)),
         v2.RandomHorizontalFlip(p=0.5),
         v2.ColorJitter(brightness=0.25, hue=0.15),
-        v2.ToTensor(),
+        v2.ToImage(),
+        v2.ToDtype(torch.float32, scale=True),
         v2.RandomChoice([
             v2.GaussianNoise(mean=0.0, sigma=0.05),
             v2.GaussianBlur(kernel_size=(5, 5), sigma=(0.1, 1.0))
@@ -110,7 +110,7 @@ def main():
 
     loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=decay)
-    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=10, min_lr=1e-7)
+    #scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=10, min_lr=1e-7)
 
     evaluation: NDArray[np.float64] = np.zeros((epochs, 10))
 
@@ -118,7 +118,7 @@ def main():
         train_loop(train_loader, model, loss_fn, optimizer, device)
         evaluation[e] = test_loop(test_loader, model, device)
 
-        scheduler.step(evaluation[e][8])
+        #scheduler.step(evaluation[e][8])  # pyright: ignore[reportUnknownMemberType]
 
         learning_rate = optimizer.param_groups[0]['lr']
 
@@ -133,7 +133,7 @@ def main():
             print(f"Memory cached: {torch.cuda.memory_reserved() / 1e6} MB")
 
     print("Done!")
-    plot_evaluation(evaluation, "Epoch", f" (η={learning_rate}, α={momentum}, batch_size={batch_size})")
+    plot_evaluation(evaluation, "Epoch", f" (η={learning_rate}, α={momentum}, b={batch_size})")
 
 
 main()

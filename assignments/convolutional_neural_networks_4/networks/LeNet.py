@@ -3,8 +3,9 @@ from torch import nn
 
 
 class LeNet(nn.Module):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, device: torch.device):
+        super().__init__()  # pyright: ignore[reportUnknownMemberType]
+        self.device = device
 
         self.network_stack = nn.Sequential(
             # 96x96x3
@@ -26,12 +27,12 @@ class LeNet(nn.Module):
             nn.Linear(9*9*24, 6*6*24),
             nn.ReLU(),
             nn.Linear(6*6*24, 11),
-        )
+        ).to(self.device)
 
         self._initialize_weights()
 
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.network_stack(x)
 
 

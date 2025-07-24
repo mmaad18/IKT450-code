@@ -52,7 +52,7 @@ class Food11Dataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
             T_list.append(idx)
 
         X = torch.stack(X_list)  # shape: (N, C, H, W)
-        T = torch.tensor(T_list, dtype=torch.float32).unsqueeze(1)  # shape: (N, 1)
+        T = torch.tensor(T_list, dtype=torch.float32)
 
         return X, T
 
