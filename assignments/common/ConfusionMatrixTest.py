@@ -13,7 +13,7 @@ class MyTestCase(unittest.TestCase):
         [1, 2, 1, 12],  # actual class 'd'
     ])
 
-    confusion_matrix = ConfusionMatrix(matrix.size)
+    confusion_matrix = ConfusionMatrix(matrix.shape[0])
     confusion_matrix.full_update(matrix)
 
     def test_actual_total(self):
@@ -108,10 +108,11 @@ class MyTestCase(unittest.TestCase):
 
         c = 6 + 9 + 10 + 12
         s = 52
-
         sum1 = 9 * 11 + 14 * 11 + 13 * 13 + 16 * 17
 
         expected = (c * s - sum1) / (s**2 - sum1)
+
+        self.assertEqual(asserted, expected)
 
 
     def test_accuracy(self):
@@ -138,6 +139,10 @@ class MyTestCase(unittest.TestCase):
         expected = np.sum(recalls * weights) / (4 * W)
 
         self.assertEqual(asserted, expected)
+
+
+    def test_plot(self):
+        self.confusion_matrix.plot()
 
 
 if __name__ == '__main__':

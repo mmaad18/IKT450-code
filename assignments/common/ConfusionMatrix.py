@@ -100,7 +100,7 @@ class ConfusionMatrix:
         return nominator / denominator if denominator > 0 else 0.0
 
 
-    def MCC(self):
+    def MCC(self) -> float:
         c = np.sum(self.matrix.diagonal())
         s = np.sum(self.matrix)
 
@@ -114,7 +114,7 @@ class ConfusionMatrix:
         return (c * s - sum1) / np.sqrt((s**2 - sum2) * (s**2 - sum3))
 
 
-    def cohens_kappa(self):
+    def cohens_kappa(self) -> float:
         c = np.sum(self.matrix.diagonal())
         s = np.sum(self.matrix)
 
@@ -126,13 +126,49 @@ class ConfusionMatrix:
         return (c * s - sum1) / (s**2 - sum1)
 
 
-    def plot(self, title: str = "Confusion Matrix"):
+    def plot(self, title: str = "Confusion Matrix") -> None:
         plt.figure(figsize=(10, 8))
-        sns.heatmap(self.matrix, annot=True, fmt='d', cmap='Blues', cbar=False,
-                    xticklabels=range(self.size), yticklabels=range(self.size))
-        plt.title(title)
-        plt.xlabel('Predicted Label')
-        plt.ylabel('True Label')
+        sns.heatmap(
+            self.matrix,
+            annot=True,
+            fmt='d',
+            cmap='Blues',
+            cbar=False,
+            xticklabels=range(self.size),
+            yticklabels=range(self.size),
+            annot_kws={"size": 24}
+        )
+        plt.title(title, fontsize=28)
+        plt.xlabel('Predicted Label', fontsize=20)
+        plt.ylabel('True Label', fontsize=20)
+        plt.xticks(fontsize=16)
+        plt.yticks(fontsize=16)
         plt.show()
 
 
+    def all_metrics(self) -> NDArray[np.float64]:
+        macro_average_precision = self.macro_average_precision()
+        macro_average_recall = self.macro_average_recall()
+        macro_f1_score = self.macro_f1_score()
+        micro_average_precision = self.micro_average_precision()
+        micro_average_recall = self.micro_average_recall()
+        micro_f1_score = self.micro_f1_score()
+        accuracy = self.accuracy()
+        balanced_accuracy = self.balanced_accuracy()
+        balanced_accuracy_weighted = self.balanced_accuracy_weighted()
+        MCC = self.MCC()
+        cohens_kappa = self.cohens_kappa()
+
+        return np.array([
+            macro_average_precision,
+            macro_average_recall,
+            macro_f1_score,
+            micro_average_precision,
+            micro_average_recall,
+            micro_f1_score,
+            accuracy,
+            balanced_accuracy,
+            balanced_accuracy_weighted,
+            MCC,
+            cohens_kappa
+        ])
