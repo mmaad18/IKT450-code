@@ -110,3 +110,40 @@ def plot_evaluation(evaluation: NDArray[np.float64], x_label: str, title_append:
     plt.tight_layout()
     plt.show()  # pyright: ignore [reportUnknownMemberType]
 
+
+def error_metrics(
+        Y_val: NDArray[np.float64],
+        Y_pred: NDArray[np.float64]
+) -> NDArray[np.float64]:
+    error = Y_pred - Y_val
+    MSE = float(np.mean(error ** 2))
+    RMSE = np.sqrt(MSE)
+
+    eps = 1e-15
+    y_pred_clipped = np.clip(Y_pred, eps, 1 - eps)
+
+    cross_entropy = float(np.mean(
+        -(Y_val * np.log(y_pred_clipped) + (1 - Y_val) * np.log(1 - y_pred_clipped))
+    ))
+
+    return np.array([MSE, RMSE, cross_entropy])
+
+
+def plot_error_metrics(error_metric: NDArray[np.float64], x_label: str, title_append: str = "") -> None:
+    plt.figure(figsize=(10, 6))
+    epochs = range(1, len(error_metric) + 1)
+
+    plt.plot(epochs, error_metric[:, 0], label="MSE")
+    plt.plot(epochs, error_metric[:, 1], label="RMSE")
+    plt.plot(epochs, error_metric[:, 2], label="Cross Entropy")
+
+    plt.title("Error Metrics" + title_append, fontsize=20)
+    plt.xlabel(x_label, fontsize=16)
+    plt.ylabel("Error", fontsize=16)
+    plt.legend(fontsize=14)
+    plt.tick_params(labelsize=14)
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+

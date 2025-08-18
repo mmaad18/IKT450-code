@@ -11,8 +11,11 @@ class Food11Dataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
         self.root_dir = os.path.join(root_dir, split)
         self.transform = transform
 
-        self.labels = [
+        self.labels: list[str] = [
             'Bread', 'Dairy product', 'Dessert', 'Egg', 'Fried food', 'Meat', 'Noodles-Pasta', 'Rice', 'Seafood', 'Soup', 'Vegetable-Fruit'
+        ]
+        self.short_labels: list[str] = [
+            'Bread', 'Dairy', 'Sweet', 'Egg', 'Fried', 'Meat', 'Pasta', 'Rice', 'Sea', 'Soup', 'Green'
         ]
 
         self.data_list = self.label_processing()

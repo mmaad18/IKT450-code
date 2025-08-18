@@ -11,7 +11,8 @@ from torch.nn import CrossEntropyLoss
 from torch.utils.data import DataLoader
 from torchvision.transforms import v2
 
-from assignments.common.metrics import evaluate_metrics, plot_evaluation
+from assignments.common.ConfusionMatrix import ConfusionMatrix
+from assignments.common.metrics import error_metrics, plot_error_metrics
 from assignments.convolutional_neural_networks_4.Food11Dataset import Food11Dataset
 from assignments.convolutional_neural_networks_4.networks.LeNet import LeNet
 from utils import display_info, load_device, print_time
@@ -42,12 +43,12 @@ def test_loop(
         dataloader: DataLoader[tuple[torch.Tensor, torch.Tensor]],
         model: nn.Module,
         device: torch.device
-) -> NDArray[np.float64]:
+) -> tuple[NDArray[np.int32], NDArray[np.int32]]:
     model.eval()
 
     size = len(cast(Sized, dataloader.dataset))
-    Y_val = np.zeros((size,))
-    Y_pred = np.zeros((size,))
+    Y_val = np.zeros((size,), dtype=np.int32)
+    Y_pred = np.zeros((size,), dtype=np.int32)
 
     b = 0  # Batch index
 
@@ -55,15 +56,16 @@ def test_loop(
         for X, T in dataloader:
             X, T = X.to(device), T.to(device).long()
 
-            pred = model(X)
-            pred_class = pred.argmax(dim=1)
+            logits  = model(X)
+            pred = logits .argmax(dim=1)
 
-            Y_val[b:b + len(T)] = T.cpu().flatten().numpy()
-            Y_pred[b:b + len(pred)] = pred_class.cpu().flatten().numpy()
+            n = T.shape[0]
+            Y_val[b:b + n] = T.cpu().flatten().numpy()
+            Y_pred[b:b + n] = pred.cpu().flatten().numpy()
 
             b += len(T)
 
-        return evaluate_metrics(Y_val, Y_pred)
+    return Y_val, Y_pred
 
 
 def main():
@@ -76,7 +78,7 @@ def main():
     model = LeNet(device)
     print(model)
 
-    learning_rate = 1e-4
+    learning_rate = 1e-3
     momentum = 0.9
     batch_size = 256
     epochs = 200
@@ -112,28 +114,52 @@ def main():
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=decay)
     #scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=10, min_lr=1e-7)
 
-    evaluation: NDArray[np.float64] = np.zeros((epochs, 10))
+    error_metric: NDArray[np.float64] = np.zeros((epochs, 3))
+
+    confusion_matrix = ConfusionMatrix(len(train_data.labels), train_data.short_labels)
+    confusion_matrix_aggregate = ConfusionMatrix(len(train_data.labels), train_data.short_labels)
+
+    confusion_matrix_metrics = np.zeros((epochs, confusion_matrix.metrics_size))
+    confusion_matrix_aggregate_metrics = np.zeros((epochs, confusion_matrix_aggregate.metrics_size))
 
     for e in range(epochs):
         train_loop(train_loader, model, loss_fn, optimizer, device)
-        evaluation[e] = test_loop(test_loader, model, device)
+        Y_val, Y_pred = test_loop(test_loader, model, device)
+        confusion_matrix.update_vector(Y_val, Y_pred, True)
+        confusion_matrix_aggregate.update_vector(Y_val, Y_pred, False)
 
-        #scheduler.step(evaluation[e][8])  # pyright: ignore[reportUnknownMemberType]
+        confusion_matrix_metrics[e] = confusion_matrix.metrics()
+        confusion_matrix_aggregate_metrics[e] = confusion_matrix_aggregate.metrics()
 
+        # scheduler.step(evaluation[e][8])  # pyright: ignore[reportUnknownMemberType]
         learning_rate = optimizer.param_groups[0]['lr']
+
+        error_metric[e] = error_metrics(Y_val, Y_pred)
 
         print(f"-----------------| Epoch: {e} |-----------------")
         print(f"Learning Rate: {learning_rate}")
         print_time(start)
-        print(f"Test MSE: {evaluation[e][8]}")
-        print(f"Test Accuracy: {evaluation[e][7]}\n")
+        print(f"Test MSE: {error_metric[e, 0]}")
+        print(f"Test RMSE: {error_metric[e, 1]}")
+        print(f"Test Cross-Entropy: {error_metric[e, 2]}\n")
 
-        if e % 10 == 0:
+        if e % 20 == 0 and e > 0:
             print(f"Memory allocated: {torch.cuda.memory_allocated() / 1e6} MB")
             print(f"Memory cached: {torch.cuda.memory_reserved() / 1e6} MB")
 
+            plot_error_metrics(error_metric, "Epoch", f" (η={learning_rate}, α={momentum}, b={batch_size})")
+            confusion_matrix.plot_metrics(confusion_matrix_metrics)
+            confusion_matrix.plot(f" (epoch={e})")
+
+
     print("Done!")
-    plot_evaluation(evaluation, "Epoch", f" (η={learning_rate}, α={momentum}, b={batch_size})")
+
+    plot_error_metrics(error_metric, "Epoch", f" (η={learning_rate}, α={momentum}, b={batch_size})")
+    confusion_matrix.plot_metrics(confusion_matrix_metrics)
+    confusion_matrix.plot()
+    confusion_matrix_aggregate.plot_metrics(confusion_matrix_aggregate_metrics)
+    confusion_matrix_aggregate.plot()
 
 
 main()
+

@@ -9,7 +9,9 @@ import matplotlib.pyplot as plt
 @dataclass
 class ConfusionMatrix:
     size: int
+    labels: list[str]
     matrix: NDArray[np.int32] = field(init=False)
+    metrics_size: int = 11
 
     def __post_init__(self):
         self.matrix = np.zeros((self.size, self.size), dtype=np.int32)
@@ -126,27 +128,28 @@ class ConfusionMatrix:
         return (c * s - sum1) / (s**2 - sum1)
 
 
-    def plot(self, title: str = "Confusion Matrix") -> None:
-        plt.figure(figsize=(10, 8))
+    def plot(self, title_append: str="") -> None:
+        plt.figure(figsize=(16, 16))
         sns.heatmap(
             self.matrix,
             annot=True,
-            fmt='d',
-            cmap='Blues',
+            fmt="d",
+            cmap="Blues",
             cbar=False,
-            xticklabels=range(self.size),
-            yticklabels=range(self.size),
+            xticklabels=self.labels,
+            yticklabels=self.labels,
             annot_kws={"size": 24}
         )
-        plt.title(title, fontsize=28)
-        plt.xlabel('Predicted Label', fontsize=20)
-        plt.ylabel('True Label', fontsize=20)
-        plt.xticks(fontsize=16)
-        plt.yticks(fontsize=16)
+        plt.title("Confusion Matrix" + title_append, fontsize=30)
+        plt.xlabel("Predicted Label", fontsize=24)
+        plt.ylabel("True Label", fontsize=24)
+        plt.xticks(fontsize=20, rotation=45, ha="right")
+        plt.yticks(fontsize=20, rotation=0)
+        plt.tight_layout()
         plt.show()
 
 
-    def all_metrics(self) -> NDArray[np.float64]:
+    def metrics(self) -> NDArray[np.float64]:
         macro_average_precision = self.macro_average_precision()
         macro_average_recall = self.macro_average_recall()
         macro_f1_score = self.macro_f1_score()
@@ -172,3 +175,55 @@ class ConfusionMatrix:
             MCC,
             cohens_kappa
         ])
+
+
+    def plot_metrics(self, history: NDArray[np.float64], title_append: str = "") -> None:
+        epochs = np.arange(history.shape[0])
+
+        fig, axes = plt.subplots(2, 2, figsize=(14, 10), sharex=True)
+
+        # --- Macro ---
+        axes[0, 0].plot(epochs, history[:, 0], label="Macro Precision")
+        axes[0, 0].plot(epochs, history[:, 1], label="Macro Recall")
+        axes[0, 0].plot(epochs, history[:, 2], label="Macro F1")
+        axes[0, 0].set_title("Macro Metrics")
+        axes[0, 0].set_ylim(0, 1)
+        axes[0, 0].grid(True, alpha=0.3)
+        axes[0, 0].legend()
+
+        # --- Micro ---
+        axes[0, 1].plot(epochs, history[:, 3], label="Micro Precision")
+        axes[0, 1].plot(epochs, history[:, 4], label="Micro Recall")
+        axes[0, 1].plot(epochs, history[:, 5], label="Micro F1")
+        axes[0, 1].set_title("Micro Metrics")
+        axes[0, 1].set_ylim(0, 1)
+        axes[0, 1].grid(True, alpha=0.3)
+        axes[0, 1].legend()
+
+        # --- Accuracy / Balanced ---
+        axes[1, 0].plot(epochs, history[:, 6], label="Accuracy")
+        axes[1, 0].plot(epochs, history[:, 7], label="Balanced Acc.")
+        axes[1, 0].plot(epochs, history[:, 8], label="Balanced Acc. (w)")
+        axes[1, 0].set_title("Accuracy Metrics")
+        axes[1, 0].set_ylim(0, 1)
+        axes[1, 0].grid(True, alpha=0.3)
+        axes[1, 0].legend()
+
+        # --- MCC / Kappa ---
+        axes[1, 1].plot(epochs, history[:, 9], label="MCC")
+        axes[1, 1].plot(epochs, history[:, 10], label="Cohen's κ")
+        axes[1, 1].set_title("Agreement Metrics")
+        axes[1, 1].set_ylim(-1, 1)
+        axes[1, 1].grid(True, alpha=0.3)
+        axes[1, 1].legend()
+
+        for ax in axes[1]:
+            ax.set_xlabel("Epoch")
+
+        fig.suptitle(f"Metrics over Epochs{(' - ' + title_append) if title_append else ''}", fontsize=14)
+        fig.tight_layout(rect=[0, 0.02, 1, 0.98])
+        plt.show()
+
+
+
+
