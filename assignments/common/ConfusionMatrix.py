@@ -5,6 +5,10 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
 
 @dataclass
 class ConfusionMatrix:
@@ -224,6 +228,65 @@ class ConfusionMatrix:
         fig.tight_layout(rect=[0, 0.02, 1, 0.98])
         plt.show()
 
+
+    def plotly_plot(self, title_append: str = "") -> None:
+        fig = px.imshow(
+            self.matrix,
+            color_continuous_scale="Blues",
+            text_auto=True,
+            x=self.labels,
+            y=self.labels,
+            aspect="equal",
+        )
+        fig.update_layout(
+            title=f"Confusion Matrix{title_append}",
+            xaxis_title="Predicted Label",
+            yaxis_title="True Label",
+            width=900,
+            height=900,
+        )
+        fig.update_xaxes(side="top")
+        fig.show()
+
+
+    def plotly_plot_metrics(self, history: NDArray[np.float64], title_append: str = "") -> None:
+        epochs = np.arange(history.shape[0])
+        fig = make_subplots(
+            rows=2, cols=2,
+            subplot_titles=("Macro Metrics", "Micro Metrics", "Accuracy Metrics", "Agreement Metrics"),
+            shared_xaxes=True
+        )
+
+        fig.add_trace(go.Scatter(x=epochs, y=history[:, 0], name="Macro Precision"), row=1, col=1)
+        fig.add_trace(go.Scatter(x=epochs, y=history[:, 1], name="Macro Recall"), row=1, col=1)
+        fig.add_trace(go.Scatter(x=epochs, y=history[:, 2], name="Macro F1"), row=1, col=1)
+
+        fig.add_trace(go.Scatter(x=epochs, y=history[:, 3], name="Micro Precision"), row=1, col=2)
+        fig.add_trace(go.Scatter(x=epochs, y=history[:, 4], name="Micro Recall"), row=1, col=2)
+        fig.add_trace(go.Scatter(x=epochs, y=history[:, 5], name="Micro F1"), row=1, col=2)
+
+        fig.add_trace(go.Scatter(x=epochs, y=history[:, 6], name="Accuracy"), row=2, col=1)
+        fig.add_trace(go.Scatter(x=epochs, y=history[:, 7], name="Balanced Acc."), row=2, col=1)
+        fig.add_trace(go.Scatter(x=epochs, y=history[:, 8], name="Balanced Acc. (w)"), row=2, col=1)
+
+        fig.add_trace(go.Scatter(x=epochs, y=history[:, 9], name="MCC"), row=2, col=2)
+        fig.add_trace(go.Scatter(x=epochs, y=history[:, 10], name="Cohen's κ"), row=2, col=2)
+
+        fig.update_yaxes(range=[0, 1], row=1, col=1)
+        fig.update_yaxes(range=[0, 1], row=1, col=2)
+        fig.update_yaxes(range=[0, 1], row=2, col=1)
+        fig.update_yaxes(range=[-1, 1], row=2, col=2)
+
+        fig.update_xaxes(title_text="Epoch", row=2, col=1)
+        fig.update_xaxes(title_text="Epoch", row=2, col=2)
+
+        fig.update_layout(
+            title=f"Metrics over Epochs{(' - ' + title_append) if title_append else ''}",
+            width=1100,
+            height=750,
+            legend_tracegroupgap=6,
+        )
+        fig.show()
 
 
 

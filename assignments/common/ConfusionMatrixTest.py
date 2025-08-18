@@ -13,7 +13,7 @@ class MyTestCase(unittest.TestCase):
         [1, 2, 1, 12],  # actual class 'd'
     ])
 
-    confusion_matrix = ConfusionMatrix(matrix.shape[0])
+    confusion_matrix = ConfusionMatrix(matrix.shape[0], ['a', 'b', 'c', 'd'])
     confusion_matrix.full_update(matrix)
 
     def test_actual_total(self):
@@ -143,6 +143,10 @@ class MyTestCase(unittest.TestCase):
 
     def test_plot(self):
         self.confusion_matrix.plot()
+
+
+    def test_plotly_plot(self):
+        self.confusion_matrix.plotly_plot()
 
 
 if __name__ == '__main__':

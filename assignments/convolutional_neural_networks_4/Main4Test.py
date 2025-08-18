@@ -179,12 +179,12 @@ class Main4Test(unittest.TestCase):
             v2.ToDtype(torch.float32, scale=True),
             v2.RandomResizedCrop(size=96, scale=(0.8, 1.0)),
             v2.RandomHorizontalFlip(p=0.5),
-            v2.ColorJitter(brightness=0.25, hue=0.15),
-            v2.RandomChoice([
-                v2.GaussianNoise(mean=0.0, sigma=0.05),
-                v2.GaussianBlur(kernel_size=(5, 5), sigma=(0.1, 1.0))
-            ]),
-            v2.Normalize(mean=[0.5607, 0.4520, 0.3385], std=[0.2598, 0.2625, 0.2692])
+            #v2.ColorJitter(brightness=0.25, hue=0.15),
+            #v2.RandomChoice([
+            #    v2.GaussianNoise(mean=0.0, sigma=0.05),
+            #    v2.GaussianBlur(kernel_size=(5, 5), sigma=(0.1, 1.0))
+            #]),
+            #v2.Normalize(mean=[0.5607, 0.4520, 0.3385], std=[0.2598, 0.2625, 0.2692])
         ])
 
         image = decode_image(file_path)
