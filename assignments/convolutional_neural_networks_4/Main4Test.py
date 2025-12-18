@@ -163,28 +163,33 @@ class Main4Test(unittest.TestCase):
     def test_image_transform(self):
         os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
-        #file_path = os.path.join(self.root_path, "Bread\\0.jpg")
-        #file_path = os.path.join(self.root_path, "Dairy product\\0.jpg")
-        #file_path = os.path.join(self.root_path, "Dessert\\0.jpg")
-        #file_path = os.path.join(self.root_path, "Egg\\0.jpg")
-        #file_path = os.path.join(self.root_path, "Fried food\\0.jpg")
-        #file_path = os.path.join(self.root_path, "Meat\\0.jpg")
-        #file_path = os.path.join(self.root_path, "Noodles-Pasta\\0.jpg")
-        #file_path = os.path.join(self.root_path, "Rice\\0.jpg")
-        #file_path = os.path.join(self.root_path, "Seafood\\0.jpg")
-        #file_path = os.path.join(self.root_path, "Soup\\0.jpg")
-        file_path = os.path.join(self.training_root_path, "Vegetable-Fruit\\0.jpg")
+        file_paths = [
+            os.path.join(self.training_root_path, "Bread\\0.jpg"),
+            os.path.join(self.training_root_path, "Dairy product\\0.jpg"),
+            os.path.join(self.training_root_path, "Dessert\\0.jpg"),
+            os.path.join(self.training_root_path, "Egg\\0.jpg"),
+            os.path.join(self.training_root_path, "Fried food\\0.jpg"),
+            os.path.join(self.training_root_path, "Meat\\0.jpg"),
+            os.path.join(self.training_root_path, "Noodles-Pasta\\0.jpg"),
+            os.path.join(self.training_root_path, "Rice\\0.jpg"),
+            os.path.join(self.training_root_path, "Seafood\\0.jpg"),
+            os.path.join(self.training_root_path, "Soup\\0.jpg"),
+            os.path.join(self.training_root_path, "Vegetable-Fruit\\0.jpg")
+        ]
+
+        file_path = file_paths[0]
 
         transform = v2.Compose([
             v2.ToDtype(torch.float32, scale=True),
-            v2.RandomResizedCrop(size=96, scale=(0.8, 1.0)),
+            v2.RandomResizedCrop(size=96, scale=(0.8, 1.0), ratio=(0.8, 1.2)),
             v2.RandomHorizontalFlip(p=0.5),
-            #v2.ColorJitter(brightness=0.25, hue=0.15),
+            #v2.RandomVerticalFlip(p=0.5),
+            v2.ColorJitter(brightness=0.05, hue=0.03),
             #v2.RandomChoice([
             #    v2.GaussianNoise(mean=0.0, sigma=0.05),
             #    v2.GaussianBlur(kernel_size=(5, 5), sigma=(0.1, 1.0))
             #]),
-            #v2.Normalize(mean=[0.5607, 0.4520, 0.3385], std=[0.2598, 0.2625, 0.2692])
+            v2.Normalize(mean=[0.5607, 0.4520, 0.3385], std=[0.2598, 0.2625, 0.2692])
         ])
 
         image = decode_image(file_path)

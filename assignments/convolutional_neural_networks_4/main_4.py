@@ -9,12 +9,12 @@ from torch import nn
 from torch.nn import CrossEntropyLoss
 # from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
-from torchvision.transforms import v2
 
 from assignments.common.ConfusionMatrix import ConfusionMatrix
 from assignments.common.metrics import plot_cross_entropy
 from assignments.convolutional_neural_networks_4.Food11Dataset import Food11Dataset
 from assignments.convolutional_neural_networks_4.networks.LeNet import LeNet
+from assignments.convolutional_neural_networks_4.util_4 import get_train_transform, get_test_transform
 from utils import display_info, load_device, print_time
 
 
@@ -24,10 +24,12 @@ def train_loop(
         loss_fn: CrossEntropyLoss,
         optimizer: torch.optim.Optimizer,
         device: torch.device
-) -> None:
+) -> float:
     model.train()
+    loss_sum = 0.0
+    n_total = 0
 
-    for _, (X, T) in enumerate(dataloader):
+    for X, T in dataloader:
         X, T = X.to(device), T.to(device).long()
 
         Y = model(X)
@@ -37,6 +39,11 @@ def train_loop(
         optimizer.zero_grad() # Reset gradients to prevent accumulation
         loss.backward()
         optimizer.step()
+
+        loss_sum += loss.item() * T.size(0)
+        n_total += T.size(0)
+
+    return loss_sum / n_total
 
 
 def test_loop(
@@ -84,63 +91,51 @@ def main():
     model = LeNet(device)
     print(model)
 
-    learning_rate = 0.1
-    momentum = 0.9
-    batch_size = 256
-    epochs = 200
-    decay = 0.0001
-
     print_time(start, "Loaded and compiled network")
 
-    transform = v2.Compose([
-        v2.ToDtype(torch.float32, scale=True),
-        v2.RandomResizedCrop(size=96, scale=(0.8, 1.0)),
-        v2.RandomHorizontalFlip(p=0.5),
-        #v2.ColorJitter(brightness=0.25, hue=0.15),
-        v2.ToImage(),
-        v2.ToDtype(torch.float32, scale=True),
-        #v2.RandomChoice([
-        #    v2.GaussianNoise(mean=0.0, sigma=0.05),
-        #    v2.GaussianBlur(kernel_size=(5, 5), sigma=(0.1, 1.0))
-        #]),
-        #v2.Normalize(mean=[0.5607, 0.4520, 0.3385], std=[0.2598, 0.2625, 0.2692]),
-    ])
-
-    train_data = Food11Dataset("datasets/Food_11", "training", transform)
-    # eval_data = Food11Dataset("datasets/Food_11", "validation", transform)
-    test_data = Food11Dataset("datasets/Food_11", "evaluation", transform)
+    train_data = Food11Dataset("datasets/Food_11", "training", get_train_transform())
+    val_data = Food11Dataset("datasets/Food_11", "validation", get_test_transform())
+    test_data = Food11Dataset("datasets/Food_11", "evaluation", get_test_transform())
 
     print_time(start, "Loaded data")
 
+    momentum = 0.9
+    batch_size = 256
+    epochs = 200
+    avg_ces: NDArray[np.float64] = np.zeros(epochs)
+    train_ces: NDArray[np.float64] = np.zeros(epochs)
+
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
-    # eval_loader = DataLoader(eval_data, batch_size=batch_size, shuffle=False)
+    val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=False)
     test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
 
     loss_fn = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adadelta(model.parameters(), lr=learning_rate, rho=0.95, eps=1e-06, weight_decay=decay)
-    #scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=10, min_lr=1e-7)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4, weight_decay=1e-4)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5, min_lr=1e-6)
 
-    avg_ces: NDArray[np.float64] = np.zeros(epochs)
-
+    # METRICS
     confusion_matrix = ConfusionMatrix(len(train_data.labels), train_data.short_labels)
     confusion_matrix_aggregate = ConfusionMatrix(len(train_data.labels), train_data.short_labels)
-
     confusion_matrix_metrics = np.zeros((epochs, confusion_matrix.metrics_size))
     confusion_matrix_aggregate_metrics = np.zeros((epochs, confusion_matrix_aggregate.metrics_size))
 
+    print_time(start, "Starting training")
+
     for e in range(epochs):
-        train_loop(train_loader, model, loss_fn, optimizer, device)
+        train_ce = train_loop(train_loader, model, loss_fn, optimizer, device)
         Y_val, Y_pred, avg_ce = test_loop(test_loader, model, loss_fn, device)
+
+        # METRICS
         confusion_matrix.update_vector(Y_val, Y_pred, True)
         confusion_matrix_aggregate.update_vector(Y_val, Y_pred, False)
-
         confusion_matrix_metrics[e] = confusion_matrix.metrics()
         confusion_matrix_aggregate_metrics[e] = confusion_matrix_aggregate.metrics()
 
-        # scheduler.step(evaluation[e][8])  # pyright: ignore[reportUnknownMemberType]
-        # learning_rate = optimizer.param_groups[0]['lr']
+        scheduler.step(avg_ce)  # pyright: ignore[reportUnknownMemberType]
+        learning_rate = optimizer.param_groups[0]['lr']
 
         avg_ces[e] = avg_ce
+        train_ces[e] = train_ce
 
         print(f"-----------------| Epoch: {e} |-----------------")
         print(f"Learning Rate: {learning_rate}")
@@ -151,14 +146,10 @@ def main():
             print(f"Memory allocated: {torch.cuda.memory_allocated() / 1e6} MB")
             print(f"Memory cached: {torch.cuda.memory_reserved() / 1e6} MB")
 
-            confusion_matrix.plotly_plot_metrics(confusion_matrix_metrics)
-            confusion_matrix.plotly_plot(f" (epoch={e})")
 
-            learning_rate = 0.9 * learning_rate
-
-
+    # DONE
     print("Done!")
-
+    plot_cross_entropy(train_ces, "Epoch", "")
     plot_cross_entropy(avg_ces, "Epoch", f" (η={learning_rate}, α={momentum}, b={batch_size})")
     confusion_matrix.plotly_plot_metrics(confusion_matrix_metrics)
     confusion_matrix.plotly_plot()
