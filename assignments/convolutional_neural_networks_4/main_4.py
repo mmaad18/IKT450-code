@@ -13,9 +13,11 @@ from torch.utils.data import DataLoader
 from assignments.common.ConfusionMatrix import ConfusionMatrix
 from assignments.common.metrics import plot_cross_entropy
 from assignments.convolutional_neural_networks_4.Food11Dataset import Food11Dataset
+from assignments.convolutional_neural_networks_4.networks.AlexNet import AlexNet
 from assignments.convolutional_neural_networks_4.networks.LeNet import LeNet
+from assignments.convolutional_neural_networks_4.networks.VggNet import VggNet
 from assignments.convolutional_neural_networks_4.util_4 import get_train_transform, get_test_transform
-from utils import display_info, load_device, print_time
+from utils import display_info, load_device, print_time, plot_list
 
 
 def train_loop(
@@ -77,7 +79,7 @@ def test_loop(
             Y_pred[b:b+n] = pred.cpu().flatten().numpy()
             b += n
 
-    avg_ce = ce_sum / max(1, n_total)
+    avg_ce = ce_sum / n_total
     return Y_val, Y_pred, avg_ce
 
 
@@ -88,7 +90,7 @@ def main():
     device: torch.device = load_device()
     print(f"Using {device} device")
 
-    model = LeNet(device)
+    model = VggNet(device)
     print(model)
 
     print_time(start, "Loaded and compiled network")
@@ -97,23 +99,34 @@ def main():
     val_data = Food11Dataset("datasets/Food_11", "validation", get_test_transform())
     test_data = Food11Dataset("datasets/Food_11", "evaluation", get_test_transform())
 
-    print_time(start, "Loaded data")
+    print_time(start, "Loaded datasets")
 
-    momentum = 0.9
     batch_size = 256
-    epochs = 200
-    avg_ces: NDArray[np.float64] = np.zeros(epochs)
-    train_ces: NDArray[np.float64] = np.zeros(epochs)
 
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=False)
     test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
 
+    print_time(start, "Created data loaders")
+
+    learning_rate = 3e-4
+    momentum = 0.9
+    weight_decay = 1e-3
+    epochs = 200
+
     loss_fn = nn.CrossEntropyLoss()
-    optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4, weight_decay=1e-4)
+    #optimizer = torch.optim.SGD(model.parameters(), lr=1e-2, momentum=0.9, weight_decay=1e-4, nesterov=True)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-2)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5, min_lr=1e-6)
+    #scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs // 4, eta_min=1e-6)
+
+    print_time(start, "Created optimizer and scheduler")
 
     # METRICS
+    avg_ces: NDArray[np.float64] = np.zeros(epochs)
+    train_ces: NDArray[np.float64] = np.zeros(epochs)
+    lr_list: list[float] = []
+
     confusion_matrix = ConfusionMatrix(len(train_data.labels), train_data.short_labels)
     confusion_matrix_aggregate = ConfusionMatrix(len(train_data.labels), train_data.short_labels)
     confusion_matrix_metrics = np.zeros((epochs, confusion_matrix.metrics_size))
@@ -123,7 +136,7 @@ def main():
 
     for e in range(epochs):
         train_ce = train_loop(train_loader, model, loss_fn, optimizer, device)
-        Y_val, Y_pred, avg_ce = test_loop(test_loader, model, loss_fn, device)
+        Y_val, Y_pred, avg_ce = test_loop(val_loader, model, loss_fn, device)
 
         # METRICS
         confusion_matrix.update_vector(Y_val, Y_pred, True)
@@ -132,29 +145,43 @@ def main():
         confusion_matrix_aggregate_metrics[e] = confusion_matrix_aggregate.metrics()
 
         scheduler.step(avg_ce)  # pyright: ignore[reportUnknownMemberType]
+        #scheduler.step()
         learning_rate = optimizer.param_groups[0]['lr']
 
         avg_ces[e] = avg_ce
         train_ces[e] = train_ce
+        lr_list.append(learning_rate)
 
         print(f"-----------------| Epoch: {e} |-----------------")
-        print(f"Learning Rate: {learning_rate}")
         print_time(start)
+        print(f"Learning Rate: {learning_rate}")
         print(f"Test Cross-Entropy: {avg_ce}\n")
 
         if e % (epochs // 10) == 0 and e > 0:
             print(f"Memory allocated: {torch.cuda.memory_allocated() / 1e6} MB")
-            print(f"Memory cached: {torch.cuda.memory_reserved() / 1e6} MB")
+            print(f"Memory cached: {torch.cuda.memory_reserved() / 1e6} MB\n")
 
+
+    print_time(start, "Training complete")
+
+    confusion_matrix_test = ConfusionMatrix(len(test_data.labels), test_data.short_labels)
+    Y_val, Y_pred, avg_ce = test_loop(test_loader, model, loss_fn, device)
+    confusion_matrix_test.update_vector(Y_val, Y_pred, True)
+    print("Average test Cross-Entropy:", avg_ce)
+
+    print_time(start, "Test complete")
 
     # DONE
-    print("Done!")
-    plot_cross_entropy(train_ces, "Epoch", "")
+    plot_list(lr_list, "Learning Rate")
+    plot_cross_entropy(train_ces, "Epoch", ", Training")
     plot_cross_entropy(avg_ces, "Epoch", f" (η={learning_rate}, α={momentum}, b={batch_size})")
     confusion_matrix.plotly_plot_metrics(confusion_matrix_metrics)
     confusion_matrix.plotly_plot()
     confusion_matrix_aggregate.plotly_plot_metrics(confusion_matrix_aggregate_metrics)
     confusion_matrix_aggregate.plotly_plot()
+    confusion_matrix_test.plotly_plot()
+
+    print_time(start, "Plots generated")
 
 
 main()

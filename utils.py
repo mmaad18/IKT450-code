@@ -1,16 +1,20 @@
 # pyright: reportUnknownMemberType=false
-
+import json
 import time
+from pathlib import Path
+from datetime import datetime
+
+import numpy as np
 import torch
 from matplotlib import pyplot as plt
 from torch.utils.data import Dataset, DataLoader, random_split
 from collections.abc import Sized
-from typing import cast
+from typing import cast, Any, Mapping
 
 
 def print_time(start: float, message: str="Elapsed time") -> None:
     end = time.perf_counter()
-    print(f"{message}: {end - start} seconds")
+    print(f"[LOG] ---- {message}: {end - start} seconds")
 
 
 def display_info(assignment_number: int) -> None:
@@ -82,4 +86,109 @@ def plot_loss(loss_type: str, losses: list[float], eta: float, alpha: float, bat
     plt.legend(fontsize=16)
     plt.grid(True)
     plt.show()
+
+
+def plot_list(list_values: list[float], title: str="Title") -> None:
+    plt.figure(figsize=(10, 6))
+    plt.plot(list_values, label=f"{title}", color='blue', linewidth=2)
+    plt.xlabel("Epoch", fontsize=16)
+    plt.ylabel(f"{title}", fontsize=16)
+    plt.title(f"{title} vs Epochs", fontsize=20)
+
+    plt.tick_params(labelsize=16)
+    plt.legend(fontsize=16)
+    plt.grid(True)
+    plt.show()
+
+
+def logs_path(run_id: str, base_path: str = "project/output/logs") -> Path:
+    run_folder = Path(base_path) / run_id
+    run_folder.mkdir(parents=True, exist_ok=True)
+    return run_folder
+
+
+def save_episode_data(step_infos: list[dict[str, Any]], episode: int, run_id: str) -> None:
+    save_path = logs_path(run_id) / f"episode_{episode}_data.npz"
+    np.savez(save_path, data=step_infos)
+
+    print(f"Episode data saved to: {save_path}")
+
+
+def load_episode_data(episode: int, run_id: str) -> list[dict]:
+    file_path = logs_path(run_id) / f"episode_{episode}_data.npz"
+
+    loaded = np.load(file_path, allow_pickle=True)
+    step_infos = loaded["data"]
+
+    return list(step_infos)
+
+
+def save_metadata_json(metadata: Mapping[str, Any], run_id: str) -> None:
+    metadata_path = logs_path(run_id) / "metadata.json"
+
+    metadata_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(metadata_path, 'w') as f:
+        json.dump(metadata, f, indent=4)
+
+    print(f"Metadata saved to: {metadata_path}")
+
+
+def save_commentary(run_id: str) -> None:
+    run_time = datetime.fromtimestamp(time.time()).strftime("%Y-%m-%d, %H:%M:%S")
+
+    comment = f"""
+# Comments
+
+### Time of run
+{run_time}
+
+### Reward function
+self.reward_coefficients = np.array([
+            -0.005 / self.dt,  # time
+            -0.25 / self.omega_max,  # omega
+            -1000.0,  # collision
+            1.0 / self.v_max,  # velocity
+            50.0,  # coverage
+        ], dtype=np.float32)
+
+features = np.array([
+            1.0,  # time
+            abs(omega),  # omega
+            1.0 if _check_collision() else 0.0,  # collision
+            v,  # velocity
+            delta,  # coverage
+        ], dtype=np.float32)
+
+R = np.dot(reward_coefficients, features)
+
+### Network architecture
+self.policy_net = nn.Sequential(
+            nn.Linear(input_dim, 256),
+            nn.ReLU(),
+            nn.Linear(256, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Linear(64, output_dim)
+        ).to(self.device)
+
+self.target_net = nn.Sequential(
+    nn.Linear(input_dim, 256),
+    nn.ReLU(),
+    nn.Linear(256, 128),
+    nn.ReLU(),
+    nn.Linear(128, 64),
+    nn.ReLU(),
+    nn.Linear(64, output_dim)
+).to(self.device) 
+    """
+
+    comment_path = logs_path(run_id) / "comment.md"
+    comment_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(comment_path, 'w') as f:
+        f.write(comment)
+
+    print(f"Comment saved to: {comment_path}")
 

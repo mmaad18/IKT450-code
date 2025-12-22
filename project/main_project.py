@@ -4,7 +4,7 @@ import torch
 from torch import nn
 
 from project.FishDataset import FishDatasetLocal
-from project.LeNet import LeNet
+from project.networks.LeNet import LeNet
 from utils import plot_loss
 from utils import display_info_project, load_device, dataset_to_loaders_3
 from torchvision import transforms

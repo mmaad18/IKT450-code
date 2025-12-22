@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
-from project.LeNet import LeNet
+from project.networks.LeNet import LeNet
 
 
 class SiameseNetwork(nn.Module):

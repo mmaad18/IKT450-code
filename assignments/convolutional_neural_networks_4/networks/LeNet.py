@@ -1,3 +1,5 @@
+from typing import Mapping, Any
+
 import torch
 from torch import nn
 
@@ -48,4 +50,21 @@ class LeNet(nn.Module):
                 torch.nn.init.kaiming_normal_(layer.weight, nonlinearity='relu')
                 torch.nn.init.zeros_(layer.bias)
 
+    """
+    def get_metadata(self) -> Mapping[str, Any]:
+        return {
+            "device": str(self.device),
+            "input_dim": self.policy_net[0].in_features,
+            "output_dim": self.policy_net[-1].out_features,
+            "layer_sizes": [layer.out_features for layer in self.policy_net if isinstance(layer, nn.Linear)],
+            "learning_rate": self.learning_rate,
+            "memory_capacity": self.memory_capacity,
+            "memory_size": len(self.memory),
+            "eps_start": self.eps_start,
+            "eps_end": self.eps_end,
+            "eps_decay": self.eps_decay,
+            "batch_size": self.batch_size,
+            "gamma": self.gamma,
+        }
+        """
 

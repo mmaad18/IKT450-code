@@ -3,42 +3,66 @@ from torch import nn
 
 
 class AlexNet(nn.Module):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, device: torch.device):
+        super().__init__()  # pyright: ignore[reportUnknownMemberType]
+        self.device = device
 
         self.network_stack = nn.Sequential(
             # 96x96x3
-            nn.Conv2d(in_channels=3, out_channels=6, kernel_size=7, padding=3),
+            nn.Conv2d(in_channels=3, out_channels=96, kernel_size=7, padding=3),
+            nn.BatchNorm2d(96),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2),
-            # 48x48x6
-            nn.Conv2d(in_channels=6, out_channels=12, kernel_size=5, padding=2),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
+            # 48x48x96
+            nn.Conv2d(in_channels=96, out_channels=256, kernel_size=5, padding=2),
+            nn.BatchNorm2d(256),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2),
-            # 24x24x12
-            nn.Conv2d(in_channels=12, out_channels=24, kernel_size=3, padding=1),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
+            # 24x24x256
+            nn.Conv2d(in_channels=256, out_channels=384, kernel_size=3, padding=1),
+            nn.BatchNorm2d(384),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2),
-            # 12x12x24
+            nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
+            # 12x12x384
+            nn.Conv2d(in_channels=384, out_channels=384, kernel_size=3, padding=1),
+            nn.BatchNorm2d(384),
+            nn.ReLU(),
+            # 12x12x384
+            nn.Conv2d(in_channels=384, out_channels=384, kernel_size=3, padding=1),
+            nn.BatchNorm2d(384),
+            nn.ReLU(),
+            # 12x12x384
+            nn.Conv2d(in_channels=384, out_channels=256, kernel_size=3, padding=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
+            # 6x6x256
             nn.Flatten(),
-            nn.Linear(12*12*24, 9*9*24),
+            nn.Dropout(p=0.5),
+            nn.Linear(6 * 6 * 256, 3072),
             nn.ReLU(),
-            nn.Linear(9*9*24, 6*6*24),
+            nn.Dropout(p=0.5),
+            nn.Linear(3072, 1024),
             nn.ReLU(),
-            nn.Linear(6*6*24, 11),
-        )
+            nn.Dropout(p=0.5),
+            nn.Linear(1024, 11),
+        ).to(self.device)
 
         self._initialize_weights()
 
-
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.network_stack(x)
 
 
     def _initialize_weights(self):
-        for layer in self.network_stack:
-            if isinstance(layer, nn.Linear):
-                torch.nn.init.xavier_normal_(layer.weight)
-                torch.nn.init.zeros_(layer.bias)
+        # Using self.modules() ensures we find layers even if they are nested
+        for m in self.modules():
+            if isinstance(m, (nn.Linear, nn.Conv2d)):
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                if m.bias is not None:
+                    nn.init.zeros_(m.bias)
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.ones_(m.weight)
+                nn.init.zeros_(m.bias)
 
 
