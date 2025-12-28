@@ -31,26 +31,21 @@ class VggNet(nn.Module):
 
         self.network_stack = nn.Sequential(
             # 96x96x3
-            BasicBlock(in_channels=3, out_channels=64),
-            # 48x48x64
-            BasicBlock(in_channels=64, out_channels=128),
-            # 24x24x128
-            BasicBlock(in_channels=128, out_channels=256),
-            # 12x12x256
-            BasicBlock(in_channels=256, out_channels=512),
-            # 6x6x512
+            BasicBlock(in_channels=3, out_channels=16),
+            # 48x48x16
+            BasicBlock(in_channels=16, out_channels=32),
+            # 24x24x32
+            BasicBlock(in_channels=32, out_channels=64),
+            # 12x12x64
             nn.Flatten(),
             nn.Dropout(p=0.5),
-            nn.Linear(6*6*512, 4096),
+            nn.Linear(12*12*64, 2048),
             nn.ReLU(),
             nn.Dropout(p=0.5),
-            nn.Linear(4096, 2048),
+            nn.Linear(2048, 512),
             nn.ReLU(),
             nn.Dropout(p=0.5),
-            nn.Linear(2048, 1024),
-            nn.ReLU(),
-            nn.Dropout(p=0.5),
-            nn.Linear(1024, 11),
+            nn.Linear(512, 11),
         ).to(self.device)
 
         self._initialize_weights()

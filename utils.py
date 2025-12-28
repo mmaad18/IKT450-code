@@ -39,6 +39,11 @@ def load_device() -> torch.device:
     )
 
 
+def display_memory_usage() -> None:
+    print(f"Memory allocated: {torch.cuda.memory_allocated() / 1e6} MB")
+    print(f"Memory cached: {torch.cuda.memory_reserved() / 1e6} MB\n")
+
+
 def dataset_to_loaders_3(
         dataset: Dataset[torch.Tensor],
         batch_size: int,

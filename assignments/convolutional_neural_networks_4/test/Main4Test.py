@@ -184,7 +184,9 @@ class Main4Test(unittest.TestCase):
             v2.RandomResizedCrop(size=96, scale=(0.8, 1.0), ratio=(0.8, 1.2)),
             v2.RandomHorizontalFlip(p=0.5),
             #v2.RandomVerticalFlip(p=0.5),
+            v2.RandomErasing(p=0.99, scale=(0.02, 0.15), ratio=(0.3, 3.3)),
             v2.RandomRotation(degrees=15),
+            v2.RandomErasing(p=0.99, scale=(0.02, 0.15), ratio=(0.3, 3.3)),
             v2.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.03),
             #v2.RandomChoice([
             #    v2.GaussianNoise(mean=0.0, sigma=0.05),

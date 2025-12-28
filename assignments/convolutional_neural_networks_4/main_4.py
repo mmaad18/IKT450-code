@@ -1,5 +1,6 @@
 # pyright: reportConstantRedefinition=false, reportMissingTypeStubs=false
 import time
+from tqdm import tqdm
 from typing import cast, Sized
 
 import numpy as np
@@ -16,8 +17,9 @@ from assignments.convolutional_neural_networks_4.Food11Dataset import Food11Data
 from assignments.convolutional_neural_networks_4.networks.AlexNet import AlexNet
 from assignments.convolutional_neural_networks_4.networks.LeNet import LeNet
 from assignments.convolutional_neural_networks_4.networks.VggNet import VggNet
-from assignments.convolutional_neural_networks_4.util_4 import get_train_transform, get_test_transform
-from utils import display_info, load_device, print_time, plot_list
+from assignments.convolutional_neural_networks_4.util_4 import get_train_transform, get_test_transform, \
+    get_base_transform
+from utils import display_info, load_device, print_time, plot_list, display_memory_usage
 
 
 def train_loop(
@@ -31,8 +33,9 @@ def train_loop(
     loss_sum = 0.0
     n_total = 0
 
-    for X, T in dataloader:
-        X, T = X.to(device), T.to(device).long()
+    for X, T in tqdm(dataloader, desc="Training loop"):
+        X = X.to(device, non_blocking=True)
+        T = T.to(device, non_blocking=True).long()
 
         Y = model(X)
         loss = loss_fn(Y, T)
@@ -65,8 +68,10 @@ def test_loop(
     n_total = 0
 
     with torch.no_grad():
-        for X, T in dataloader:
-            X, T = X.to(device), T.to(device).long()
+        for X, T in tqdm(dataloader, desc="Test loop"):
+            X = X.to(device, non_blocking=True)
+            T = T.to(device, non_blocking=True).long()
+
             logits  = model(X)
             pred = logits .argmax(dim=1)
 
@@ -95,16 +100,32 @@ def main():
 
     print_time(start, "Loaded and compiled network")
 
-    train_data = Food11Dataset("datasets/Food_11", "training", get_train_transform())
-    val_data = Food11Dataset("datasets/Food_11", "validation", get_test_transform())
-    test_data = Food11Dataset("datasets/Food_11", "evaluation", get_test_transform())
+    train_data = Food11Dataset("datasets/Food_11", "training", get_base_transform(), get_train_transform())
+    val_data = Food11Dataset("datasets/Food_11", "validation", get_base_transform(), get_test_transform())
+    test_data = Food11Dataset("datasets/Food_11", "evaluation", get_base_transform(), get_test_transform())
 
     print_time(start, "Loaded datasets")
 
     batch_size = 256
 
-    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=False)
+    train_loader = DataLoader(
+        train_data,
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=16,
+        persistent_workers=True,
+        pin_memory=True,
+        prefetch_factor=8,
+    )
+    val_loader = DataLoader(
+        val_data,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=8,
+        persistent_workers=True,
+        pin_memory=True,
+        prefetch_factor=4,
+    )
     test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
 
     print_time(start, "Created data loaders")
@@ -112,12 +133,19 @@ def main():
     learning_rate = 3e-4
     momentum = 0.9
     weight_decay = 1e-3
-    epochs = 200
+    epochs = 300
 
     loss_fn = nn.CrossEntropyLoss()
-    #optimizer = torch.optim.SGD(model.parameters(), lr=1e-2, momentum=0.9, weight_decay=1e-4, nesterov=True)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-2)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5, min_lr=1e-6)
+    optimizer = torch.optim.SGD(model.parameters(), lr=1e-2, momentum=0.9, weight_decay=1e-2, nesterov=True)
+    #optimizer = torch.optim.AdamW(model.parameters(), lr=1e-2, weight_decay=1e-3)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer,
+        mode='min',
+        factor=0.5,
+        patience=10,
+        threshold=1e-3,
+        min_lr=1e-7
+    )
     #scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs // 4, eta_min=1e-6)
 
     print_time(start, "Created optimizer and scheduler")
@@ -158,8 +186,7 @@ def main():
         print(f"Test Cross-Entropy: {avg_ce}\n")
 
         if e % (epochs // 10) == 0 and e > 0:
-            print(f"Memory allocated: {torch.cuda.memory_allocated() / 1e6} MB")
-            print(f"Memory cached: {torch.cuda.memory_reserved() / 1e6} MB\n")
+            display_memory_usage()
 
 
     print_time(start, "Training complete")
@@ -177,12 +204,13 @@ def main():
     plot_cross_entropy(avg_ces, "Epoch", f" (η={learning_rate}, α={momentum}, b={batch_size})")
     confusion_matrix.plotly_plot_metrics(confusion_matrix_metrics)
     confusion_matrix.plotly_plot()
-    confusion_matrix_aggregate.plotly_plot_metrics(confusion_matrix_aggregate_metrics)
-    confusion_matrix_aggregate.plotly_plot()
+    confusion_matrix_aggregate.plotly_plot_metrics(confusion_matrix_aggregate_metrics, "Aggregate")
+    confusion_matrix_aggregate.plotly_plot("Aggregate")
     confusion_matrix_test.plotly_plot()
 
     print_time(start, "Plots generated")
 
 
-main()
+if __name__ == "__main__":
+    main()
 
