@@ -1,3 +1,5 @@
+from typing import Mapping, Any
+
 import torch
 from torch import nn, Tensor
 
@@ -31,15 +33,17 @@ class VggNet(nn.Module):
 
         self.network_stack = nn.Sequential(
             # 96x96x3
-            BasicBlock(in_channels=3, out_channels=16),
-            # 48x48x16
-            BasicBlock(in_channels=16, out_channels=32),
-            # 24x24x32
+            BasicBlock(in_channels=3, out_channels=32),
+            # 48x48x32
             BasicBlock(in_channels=32, out_channels=64),
-            # 12x12x64
+            # 24x24x64
+            BasicBlock(in_channels=64, out_channels=128),
+            # 12x12x128
+            BasicBlock(in_channels=128, out_channels=256),
+            # 6x6x256
             nn.Flatten(),
             nn.Dropout(p=0.5),
-            nn.Linear(12*12*64, 2048),
+            nn.Linear(6*6*256, 2048),
             nn.ReLU(),
             nn.Dropout(p=0.5),
             nn.Linear(2048, 512),
@@ -56,14 +60,9 @@ class VggNet(nn.Module):
 
 
     def _initialize_weights(self):
-        # Using self.modules() ensures we find layers even if they are nested
-        for m in self.modules():
-            if isinstance(m, (nn.Linear, nn.Conv2d)):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
-                if m.bias is not None:
-                    nn.init.zeros_(m.bias)
-            elif isinstance(m, nn.BatchNorm2d):
-                nn.init.ones_(m.weight)
-                nn.init.zeros_(m.bias)
+        for layer in self.network_stack:
+            if isinstance(layer, nn.Linear):
+                torch.nn.init.kaiming_normal_(layer.weight, nonlinearity='relu')
+                torch.nn.init.zeros_(layer.bias)
 
 

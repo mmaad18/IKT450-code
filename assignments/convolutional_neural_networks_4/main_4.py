@@ -19,7 +19,8 @@ from assignments.convolutional_neural_networks_4.networks.LeNet import LeNet
 from assignments.convolutional_neural_networks_4.networks.VggNet import VggNet
 from assignments.convolutional_neural_networks_4.util_4 import get_train_transform, get_test_transform, \
     get_base_transform
-from utils import display_info, load_device, print_time, plot_list, display_memory_usage
+from utils import display_info, load_device, print_time, plot_list, display_memory_usage, save_commentary, \
+    create_run_id, save_metadata_json, logs_path
 
 
 def train_loop(
@@ -90,6 +91,8 @@ def test_loop(
 
 def main():
     display_info(4)
+    run_id = create_run_id("A4_Vgg")
+
     start = time.perf_counter()
 
     device: torch.device = load_device()
@@ -130,24 +133,24 @@ def main():
 
     print_time(start, "Created data loaders")
 
-    learning_rate = 3e-4
     momentum = 0.9
-    weight_decay = 1e-3
     epochs = 300
 
     loss_fn = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=1e-2, momentum=0.9, weight_decay=1e-2, nesterov=True)
-    #optimizer = torch.optim.AdamW(model.parameters(), lr=1e-2, weight_decay=1e-3)
+    #optimizer = torch.optim.SGD(model.parameters(), lr=1e-2, momentum=0.9, weight_decay=1e-2, nesterov=True)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-3)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer,
         mode='min',
         factor=0.5,
         patience=10,
-        threshold=1e-3,
-        min_lr=1e-7
+        threshold=1e-2,
+        min_lr=1e-6
     )
     #scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs // 4, eta_min=1e-6)
 
+    save_metadata_json(run_id, batch_size, epochs, optimizer, scheduler)
+    save_commentary(run_id, model.__str__())
     print_time(start, "Created optimizer and scheduler")
 
     # METRICS
@@ -201,7 +204,7 @@ def main():
     # DONE
     plot_list(lr_list, "Learning Rate")
     plot_cross_entropy(train_ces, "Epoch", ", Training")
-    plot_cross_entropy(avg_ces, "Epoch", f" (η={learning_rate}, α={momentum}, b={batch_size})")
+    plot_cross_entropy(avg_ces, "Epoch", f" (α={momentum}, b={batch_size})")
     confusion_matrix.plotly_plot_metrics(confusion_matrix_metrics)
     confusion_matrix.plotly_plot()
     confusion_matrix_aggregate.plotly_plot_metrics(confusion_matrix_aggregate_metrics, "Aggregate")
@@ -209,6 +212,10 @@ def main():
     confusion_matrix_test.plotly_plot()
 
     print_time(start, "Plots generated")
+
+    torch.save(model.state_dict(), logs_path(run_id) / f"dqn_checkpoint.pth")
+
+    print_time(start, "Saved data")
 
 
 if __name__ == "__main__":

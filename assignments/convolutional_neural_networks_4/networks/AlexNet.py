@@ -55,14 +55,9 @@ class AlexNet(nn.Module):
 
 
     def _initialize_weights(self):
-        # Using self.modules() ensures we find layers even if they are nested
-        for m in self.modules():
-            if isinstance(m, (nn.Linear, nn.Conv2d)):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
-                if m.bias is not None:
-                    nn.init.zeros_(m.bias)
-            elif isinstance(m, nn.BatchNorm2d):
-                nn.init.ones_(m.weight)
-                nn.init.zeros_(m.bias)
+        for layer in self.network_stack:
+            if isinstance(layer, nn.Linear):
+                torch.nn.init.kaiming_normal_(layer.weight, nonlinearity='relu')
+                torch.nn.init.zeros_(layer.bias)
 
 

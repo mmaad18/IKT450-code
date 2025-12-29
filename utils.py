@@ -7,9 +7,11 @@ from datetime import datetime
 import numpy as np
 import torch
 from matplotlib import pyplot as plt
+from torch.optim import Optimizer
+from torch.optim.lr_scheduler import ReduceLROnPlateau, LRScheduler
 from torch.utils.data import Dataset, DataLoader, random_split
 from collections.abc import Sized
-from typing import cast, Any, Mapping
+from typing import cast, Any, Mapping, Union
 
 
 def print_time(start: float, message: str="Elapsed time") -> None:
@@ -106,7 +108,12 @@ def plot_list(list_values: list[float], title: str="Title") -> None:
     plt.show()
 
 
-def logs_path(run_id: str, base_path: str = "project/output/logs") -> Path:
+def create_run_id(net_name: str) -> str:
+    run_time = datetime.fromtimestamp(time.time()).strftime("%y%m%d_%H%M%S")
+    return net_name + "_" + run_time
+
+
+def logs_path(run_id: str, base_path: str = "output/logs") -> Path:
     run_folder = Path(base_path) / run_id
     run_folder.mkdir(parents=True, exist_ok=True)
     return run_folder
@@ -128,10 +135,24 @@ def load_episode_data(episode: int, run_id: str) -> list[dict]:
     return list(step_infos)
 
 
-def save_metadata_json(metadata: Mapping[str, Any], run_id: str) -> None:
-    metadata_path = logs_path(run_id) / "metadata.json"
+def get_state_dict(obj: Union[Optimizer, LRScheduler]) -> dict:
+    return {
+        "type": obj.__class__.__name__,
+        "state_dict": obj.state_dict(),
+    }
 
+
+def save_metadata_json(run_id: str, batch_size: int, epochs: int, optimizer: Optimizer, scheduler: LRScheduler) -> None:
+    metadata_path = logs_path(run_id) / "metadata.json"
     metadata_path.parent.mkdir(parents=True, exist_ok=True)
+
+    metadata = {
+        "run_id": run_id,
+        "batch_size": batch_size,
+        "epochs": epochs,
+        "optimizer": get_state_dict(optimizer),
+        "scheduler": get_state_dict(scheduler),
+    }
 
     with open(metadata_path, 'w') as f:
         json.dump(metadata, f, indent=4)
@@ -139,58 +160,25 @@ def save_metadata_json(metadata: Mapping[str, Any], run_id: str) -> None:
     print(f"Metadata saved to: {metadata_path}")
 
 
-def save_commentary(run_id: str) -> None:
+def save_commentary(run_id: str, network_structure: str) -> None:
+    comment_path = logs_path(run_id) / "comment.md"
+    comment_path.parent.mkdir(parents=True, exist_ok=True)
+
     run_time = datetime.fromtimestamp(time.time()).strftime("%Y-%m-%d, %H:%M:%S")
 
     comment = f"""
 # Comments
 
+### Run ID
+{run_id}
+
 ### Time of run
 {run_time}
 
-### Reward function
-self.reward_coefficients = np.array([
-            -0.005 / self.dt,  # time
-            -0.25 / self.omega_max,  # omega
-            -1000.0,  # collision
-            1.0 / self.v_max,  # velocity
-            50.0,  # coverage
-        ], dtype=np.float32)
+### Network Structure
+{network_structure}
 
-features = np.array([
-            1.0,  # time
-            abs(omega),  # omega
-            1.0 if _check_collision() else 0.0,  # collision
-            v,  # velocity
-            delta,  # coverage
-        ], dtype=np.float32)
-
-R = np.dot(reward_coefficients, features)
-
-### Network architecture
-self.policy_net = nn.Sequential(
-            nn.Linear(input_dim, 256),
-            nn.ReLU(),
-            nn.Linear(256, 128),
-            nn.ReLU(),
-            nn.Linear(128, 64),
-            nn.ReLU(),
-            nn.Linear(64, output_dim)
-        ).to(self.device)
-
-self.target_net = nn.Sequential(
-    nn.Linear(input_dim, 256),
-    nn.ReLU(),
-    nn.Linear(256, 128),
-    nn.ReLU(),
-    nn.Linear(128, 64),
-    nn.ReLU(),
-    nn.Linear(64, output_dim)
-).to(self.device) 
     """
-
-    comment_path = logs_path(run_id) / "comment.md"
-    comment_path.parent.mkdir(parents=True, exist_ok=True)
 
     with open(comment_path, 'w') as f:
         f.write(comment)
