@@ -18,9 +18,9 @@ from assignments.convolutional_neural_networks_4.networks.AlexNet import AlexNet
 from assignments.convolutional_neural_networks_4.networks.LeNet import LeNet
 from assignments.convolutional_neural_networks_4.networks.VggNet import VggNet
 from assignments.convolutional_neural_networks_4.util_4 import get_train_transform, get_test_transform, \
-    get_base_transform
+    get_base_transform, save_metrics
 from utils import display_info, load_device, print_time, plot_list, display_memory_usage, save_commentary, \
-    create_run_id, save_metadata_json, logs_path
+    create_run_id, save_metadata, save_model
 
 
 def train_loop(
@@ -149,13 +149,13 @@ def main():
     )
     #scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs // 4, eta_min=1e-6)
 
-    save_metadata_json(run_id, batch_size, epochs, optimizer, scheduler)
+    save_metadata(run_id, batch_size, epochs, optimizer, scheduler)
     save_commentary(run_id, model.__str__())
     print_time(start, "Created optimizer and scheduler")
 
     # METRICS
-    avg_ces: NDArray[np.float64] = np.zeros(epochs)
-    train_ces: NDArray[np.float64] = np.zeros(epochs)
+    avg_ces: list[float] = []
+    train_ces: list[float] = []
     lr_list: list[float] = []
 
     confusion_matrix = ConfusionMatrix(len(train_data.labels), train_data.short_labels)
@@ -179,8 +179,8 @@ def main():
         #scheduler.step()
         learning_rate = optimizer.param_groups[0]['lr']
 
-        avg_ces[e] = avg_ce
-        train_ces[e] = train_ce
+        avg_ces.append(avg_ce)
+        train_ces.append(train_ce)
         lr_list.append(learning_rate)
 
         print(f"-----------------| Epoch: {e} |-----------------")
@@ -195,13 +195,13 @@ def main():
     print_time(start, "Training complete")
 
     confusion_matrix_test = ConfusionMatrix(len(test_data.labels), test_data.short_labels)
-    Y_val, Y_pred, avg_ce = test_loop(test_loader, model, loss_fn, device)
+    Y_val, Y_pred, avg_test_ce = test_loop(test_loader, model, loss_fn, device)
     confusion_matrix_test.update_vector(Y_val, Y_pred, True)
-    print("Average test Cross-Entropy:", avg_ce)
+    print("Average test Cross-Entropy:", avg_test_ce)
 
     print_time(start, "Test complete")
 
-    # DONE
+    # PLOT
     plot_list(lr_list, "Learning Rate")
     plot_cross_entropy(train_ces, "Epoch", ", Training")
     plot_cross_entropy(avg_ces, "Epoch", f" (α={momentum}, b={batch_size})")
@@ -213,7 +213,19 @@ def main():
 
     print_time(start, "Plots generated")
 
-    torch.save(model.state_dict(), logs_path(run_id) / f"dqn_checkpoint.pth")
+    # SAVE
+    save_metrics(
+        run_id,
+        lr_list,
+        train_ces,
+        avg_ces,
+        confusion_matrix_metrics,
+        confusion_matrix_aggregate_metrics,
+        confusion_matrix,
+        confusion_matrix_aggregate,
+        confusion_matrix_test
+    )
+    save_model(run_id, model)
 
     print_time(start, "Saved data")
 

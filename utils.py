@@ -108,31 +108,15 @@ def plot_list(list_values: list[float], title: str="Title") -> None:
     plt.show()
 
 
-def create_run_id(net_name: str) -> str:
+def create_run_id(network_name: str) -> str:
     run_time = datetime.fromtimestamp(time.time()).strftime("%y%m%d_%H%M%S")
-    return net_name + "_" + run_time
+    return network_name + "_" + run_time
 
 
 def logs_path(run_id: str, base_path: str = "output/logs") -> Path:
     run_folder = Path(base_path) / run_id
     run_folder.mkdir(parents=True, exist_ok=True)
     return run_folder
-
-
-def save_episode_data(step_infos: list[dict[str, Any]], episode: int, run_id: str) -> None:
-    save_path = logs_path(run_id) / f"episode_{episode}_data.npz"
-    np.savez(save_path, data=step_infos)
-
-    print(f"Episode data saved to: {save_path}")
-
-
-def load_episode_data(episode: int, run_id: str) -> list[dict]:
-    file_path = logs_path(run_id) / f"episode_{episode}_data.npz"
-
-    loaded = np.load(file_path, allow_pickle=True)
-    step_infos = loaded["data"]
-
-    return list(step_infos)
 
 
 def get_state_dict(obj: Union[Optimizer, LRScheduler]) -> dict:
@@ -142,7 +126,7 @@ def get_state_dict(obj: Union[Optimizer, LRScheduler]) -> dict:
     }
 
 
-def save_metadata_json(run_id: str, batch_size: int, epochs: int, optimizer: Optimizer, scheduler: LRScheduler) -> None:
+def save_metadata(run_id: str, batch_size: int, epochs: int, optimizer: Optimizer, scheduler: LRScheduler) -> None:
     metadata_path = logs_path(run_id) / "metadata.json"
     metadata_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -172,7 +156,7 @@ def save_commentary(run_id: str, network_structure: str) -> None:
 ### Run ID
 {run_id}
 
-### Time of run
+### Time of Run
 {run_time}
 
 ### Network Structure
@@ -184,4 +168,27 @@ def save_commentary(run_id: str, network_structure: str) -> None:
         f.write(comment)
 
     print(f"Comment saved to: {comment_path}")
+
+
+def load_metrics(run_id: str) -> dict[str, np.ndarray]:
+    file_path = logs_path(run_id) / "metrics.npz"
+    with np.load(file_path) as loaded:
+        print(f"Loading metrics from: {file_path}")
+        return dict(loaded)
+
+
+def save_model(run_id: str, model: torch.nn.Module) -> None:
+    file_path = logs_path(run_id) / "model.pth"
+    torch.save(model.state_dict(), file_path)
+    print(f"Model saved to: {file_path}")
+
+
+def load_model(run_id: str, model: torch.nn.Module, device: torch.device) -> torch.nn.Module:
+    file_path = logs_path(run_id) / "model.pth"
+    state_dict = torch.load(file_path, map_location=device, weights_only=True)
+    model.load_state_dict(state_dict)
+    model.to(device)
+
+    print(f"Model loaded from: {file_path}")
+    return model
 

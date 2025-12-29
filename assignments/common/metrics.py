@@ -111,7 +111,7 @@ def plot_evaluation(evaluation: NDArray[np.float64], x_label: str, title_append:
     plt.show()  # pyright: ignore [reportUnknownMemberType]
 
 
-def plot_cross_entropy(avg_ce: NDArray[np.float64], x_label: str, title_append: str = "") -> None:
+def plot_cross_entropy(avg_ce: list[float], x_label: str, title_append: str = "") -> None:
     epochs = np.arange(1, len(avg_ce) + 1)
 
     plt.figure(figsize=(10, 6))

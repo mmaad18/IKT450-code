@@ -1,5 +1,9 @@
+import numpy as np
 import torch
 from torchvision.transforms import v2
+
+from assignments.common.ConfusionMatrix import ConfusionMatrix
+from utils import logs_path
 
 
 def get_base_transform() -> v2.Compose:
@@ -34,4 +38,34 @@ def get_test_transform() -> v2.Compose:
             std=[0.2598, 0.2625, 0.2692],
         ),
     ])
+
+
+def save_metrics(
+        run_id: str,
+        lr_list: list[float],
+        train_ces: list[float],
+        avg_ces: list[float],
+        confusion_matrix_metrics: np.ndarray,
+        confusion_matrix_aggregate_metrics: np.ndarray,
+        confusion_matrix: ConfusionMatrix,
+        confusion_matrix_aggregate: ConfusionMatrix,
+        confusion_matrix_test: ConfusionMatrix
+):
+    file_path = logs_path(run_id) / f"metrics.npz"
+
+    np.savez(
+        file_path,
+        lr_list=np.asarray(lr_list, dtype=np.float64),
+        train_ces=np.asarray(train_ces, dtype=np.float64),
+        avg_ces=np.asarray(avg_ces, dtype=np.float64),
+        confusion_matrix_metrics=confusion_matrix_metrics,
+        confusion_matrix_aggregate_metrics=confusion_matrix_aggregate_metrics,
+        confusion_matrix_val=confusion_matrix.matrix,
+        confusion_matrix_val_agg=confusion_matrix_aggregate.matrix,
+        confusion_matrix_test=confusion_matrix_test.matrix,
+    )
+
+    print(f"Metrics saved to: {file_path}")
+
+
 
