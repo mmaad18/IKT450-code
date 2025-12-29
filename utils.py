@@ -1,6 +1,7 @@
 # pyright: reportUnknownMemberType=false
 import json
 import time
+import webbrowser
 from pathlib import Path
 from datetime import datetime
 
@@ -95,17 +96,23 @@ def plot_loss(loss_type: str, losses: list[float], eta: float, alpha: float, bat
     plt.show()
 
 
-def plot_list(list_values: list[float], title: str="Title") -> None:
+def plot_list(list_values: list[float], ylabel: str, title_append: str="Title", save_path: Path | None = None) -> None:
     plt.figure(figsize=(10, 6))
-    plt.plot(list_values, label=f"{title}", color='blue', linewidth=2)
+    plt.plot(list_values, label=f"{ylabel}", linewidth=2)
     plt.xlabel("Epoch", fontsize=16)
-    plt.ylabel(f"{title}", fontsize=16)
-    plt.title(f"{title} vs Epochs", fontsize=20)
-
+    plt.ylabel(f"{ylabel}", fontsize=16)
+    plt.title(f"{ylabel} vs Epochs{title_append}", fontsize=20)
     plt.tick_params(labelsize=16)
     plt.legend(fontsize=16)
     plt.grid(True)
-    plt.show()
+    plt.tight_layout()
+
+    if save_path is not None:
+        Path(save_path).parent.mkdir(parents=True, exist_ok=True)
+        plt.savefig(save_path, dpi=300, bbox_inches="tight")
+        plt.close()
+    else:
+        plt.show()
 
 
 def create_run_id(network_name: str) -> str:
@@ -191,4 +198,9 @@ def load_model(run_id: str, model: torch.nn.Module, device: torch.device) -> tor
 
     print(f"Model loaded from: {file_path}")
     return model
+
+
+def load_plotly_webbrowser(save_path: Path) -> None:
+    webbrowser.open(save_path.resolve().as_uri())
+
 

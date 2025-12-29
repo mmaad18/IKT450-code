@@ -6,7 +6,6 @@ import torch
 from torch.utils.data import DataLoader
 from torchvision.io import decode_image
 from torchvision.transforms import v2
-from PIL import Image
 
 import numpy as np
 
@@ -14,6 +13,8 @@ from assignments.convolutional_neural_networks_4.Food11Dataset import Food11Data
 from project.main_project_utils import images_size, path_to_fish_id, images_size_by_class, crop_black_borders
 
 from matplotlib import pyplot as plt
+
+from utils import logs_path, load_plotly_webbrowser
 
 
 class Main4Test(unittest.TestCase):
@@ -248,6 +249,22 @@ class Main4Test(unittest.TestCase):
 
         print(f"Mean: {mean}")
         print(f"Std: {std}")
+
+
+    def test_load_plotly_to_webbrowser(self):
+        run_path = logs_path("A4_Vgg_251229_201858")
+
+        path_list = [
+            run_path / "confusion_matrix.html",
+            run_path / "confusion_matrix_aggregate.html",
+            run_path / "confusion_matrix_test.html",
+            run_path / "plotly_metrics.html",
+            run_path / "plotly_metrics_aggregate.html"
+        ]
+
+        for path in path_list:
+            load_plotly_webbrowser(path)
+
 
 
 if __name__ == '__main__':

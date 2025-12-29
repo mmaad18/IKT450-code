@@ -8,11 +8,9 @@ import torch
 from numpy.typing import NDArray
 from torch import nn
 from torch.nn import CrossEntropyLoss
-# from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
 
 from assignments.common.ConfusionMatrix import ConfusionMatrix
-from assignments.common.metrics import plot_cross_entropy
 from assignments.convolutional_neural_networks_4.Food11Dataset import Food11Dataset
 from assignments.convolutional_neural_networks_4.networks.AlexNet import AlexNet
 from assignments.convolutional_neural_networks_4.networks.LeNet import LeNet
@@ -20,7 +18,7 @@ from assignments.convolutional_neural_networks_4.networks.VggNet import VggNet
 from assignments.convolutional_neural_networks_4.util_4 import get_train_transform, get_test_transform, \
     get_base_transform, save_metrics
 from utils import display_info, load_device, print_time, plot_list, display_memory_usage, save_commentary, \
-    create_run_id, save_metadata, save_model
+    create_run_id, save_metadata, save_model, logs_path
 
 
 def train_loop(
@@ -133,7 +131,6 @@ def main():
 
     print_time(start, "Created data loaders")
 
-    momentum = 0.9
     epochs = 300
 
     loss_fn = nn.CrossEntropyLoss()
@@ -202,14 +199,16 @@ def main():
     print_time(start, "Test complete")
 
     # PLOT
-    plot_list(lr_list, "Learning Rate")
-    plot_cross_entropy(train_ces, "Epoch", ", Training")
-    plot_cross_entropy(avg_ces, "Epoch", f" (α={momentum}, b={batch_size})")
-    confusion_matrix.plotly_plot_metrics(confusion_matrix_metrics)
-    confusion_matrix.plotly_plot()
-    confusion_matrix_aggregate.plotly_plot_metrics(confusion_matrix_aggregate_metrics, "Aggregate")
-    confusion_matrix_aggregate.plotly_plot("Aggregate")
-    confusion_matrix_test.plotly_plot()
+    plot_path = logs_path(run_id)
+    plot_list(lr_list, "Learning Rate", "", plot_path / "learning_rate.png")
+    plot_list(train_ces, "Cross-Entropy", ", Training", plot_path / "cross_entropy_training.png")
+    plot_list(avg_ces, "Cross-Entropy", ", Validation", plot_path / "cross_entropy_validation.png")
+
+    confusion_matrix.save_plotly_metrics(confusion_matrix_metrics, plot_path / "plotly_metrics.html")
+    confusion_matrix.save_plotly(plot_path / "confusion_matrix.html")
+    confusion_matrix_aggregate.save_plotly_metrics(confusion_matrix_aggregate_metrics, plot_path / "plotly_metrics_aggregate.html", "Aggregate")
+    confusion_matrix_aggregate.save_plotly(plot_path / "confusion_matrix_aggregate.html", " - Aggregate")
+    confusion_matrix_test.save_plotly(plot_path / "confusion_matrix_test.html", " - Test")
 
     print_time(start, "Plots generated")
 

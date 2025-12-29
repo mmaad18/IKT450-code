@@ -1,12 +1,10 @@
 from dataclasses import dataclass, field
-from numpy.typing import NDArray
+from pathlib import Path
 
 import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
-
 import plotly.express as px
 import plotly.graph_objects as go
+from numpy.typing import NDArray
 from plotly.subplots import make_subplots
 
 
@@ -132,27 +130,6 @@ class ConfusionMatrix:
         return (c * s - sum1) / (s**2 - sum1)
 
 
-    def plot(self, title_append: str="") -> None:
-        plt.figure(figsize=(16, 16))
-        sns.heatmap(
-            self.matrix,
-            annot=True,
-            fmt="d",
-            cmap="Blues",
-            cbar=False,
-            xticklabels=self.labels,
-            yticklabels=self.labels,
-            annot_kws={"size": 24}
-        )
-        plt.title("Confusion Matrix" + title_append, fontsize=30)
-        plt.xlabel("Predicted Label", fontsize=24)
-        plt.ylabel("True Label", fontsize=24)
-        plt.xticks(fontsize=20, rotation=45, ha="right")
-        plt.yticks(fontsize=20, rotation=0)
-        plt.tight_layout()
-        plt.show()
-
-
     def metrics(self) -> NDArray[np.float64]:
         macro_average_precision = self.macro_average_precision()
         macro_average_recall = self.macro_average_recall()
@@ -181,55 +158,7 @@ class ConfusionMatrix:
         ])
 
 
-    def plot_metrics(self, history: NDArray[np.float64], title_append: str = "") -> None:
-        epochs = np.arange(history.shape[0])
-
-        fig, axes = plt.subplots(2, 2, figsize=(14, 10), sharex=True)
-
-        # --- Macro ---
-        axes[0, 0].plot(epochs, history[:, 0], label="Macro Precision")
-        axes[0, 0].plot(epochs, history[:, 1], label="Macro Recall")
-        axes[0, 0].plot(epochs, history[:, 2], label="Macro F1")
-        axes[0, 0].set_title("Macro Metrics")
-        axes[0, 0].set_ylim(0, 1)
-        axes[0, 0].grid(True, alpha=0.3)
-        axes[0, 0].legend()
-
-        # --- Micro ---
-        axes[0, 1].plot(epochs, history[:, 3], label="Micro Precision")
-        axes[0, 1].plot(epochs, history[:, 4], label="Micro Recall")
-        axes[0, 1].plot(epochs, history[:, 5], label="Micro F1")
-        axes[0, 1].set_title("Micro Metrics")
-        axes[0, 1].set_ylim(0, 1)
-        axes[0, 1].grid(True, alpha=0.3)
-        axes[0, 1].legend()
-
-        # --- Accuracy / Balanced ---
-        axes[1, 0].plot(epochs, history[:, 6], label="Accuracy")
-        axes[1, 0].plot(epochs, history[:, 7], label="Balanced Acc.")
-        axes[1, 0].plot(epochs, history[:, 8], label="Balanced Acc. (w)")
-        axes[1, 0].set_title("Accuracy Metrics")
-        axes[1, 0].set_ylim(0, 1)
-        axes[1, 0].grid(True, alpha=0.3)
-        axes[1, 0].legend()
-
-        # --- MCC / Kappa ---
-        axes[1, 1].plot(epochs, history[:, 9], label="MCC")
-        axes[1, 1].plot(epochs, history[:, 10], label="Cohen's κ")
-        axes[1, 1].set_title("Agreement Metrics")
-        axes[1, 1].set_ylim(-1, 1)
-        axes[1, 1].grid(True, alpha=0.3)
-        axes[1, 1].legend()
-
-        for ax in axes[1]:
-            ax.set_xlabel("Epoch")
-
-        fig.suptitle(f"Metrics over Epochs{(' - ' + title_append) if title_append else ''}", fontsize=14)
-        fig.tight_layout(rect=[0, 0.02, 1, 0.98])
-        plt.show()
-
-
-    def plotly_plot(self, title_append: str = "") -> None:
+    def _get_plotly_fig(self, title_append: str = "") -> go.Figure:
         fig = px.imshow(
             self.matrix,
             color_continuous_scale="Blues",
@@ -246,10 +175,10 @@ class ConfusionMatrix:
             height=900,
         )
         fig.update_xaxes(side="top")
-        fig.show()
+        return fig
 
 
-    def plotly_plot_metrics(self, history: NDArray[np.float64], title_append: str = "") -> None:
+    def _get_plotly_metrics_fig(self, history: NDArray[np.float64], title_append: str = "") -> go.Figure:
         epochs = np.arange(history.shape[0])
         fig = make_subplots(
             rows=2, cols=2,
@@ -286,7 +215,28 @@ class ConfusionMatrix:
             height=750,
             legend_tracegroupgap=6,
         )
+        return fig
+
+
+    def plotly_plot(self, title_append: str = ""):
+        fig = self._get_plotly_fig(title_append)
         fig.show()
+
+
+    def plotly_plot_metrics(self, history: NDArray[np.float64], title_append: str = ""):
+        fig = self._get_plotly_metrics_fig(history, title_append)
+        fig.show()
+
+
+    def save_plotly(self, save_path: Path, title_append: str = ""):
+        fig = self._get_plotly_fig(title_append)
+        fig.write_html(save_path)
+
+
+    def save_plotly_metrics(self, history: NDArray[np.float64], save_path: Path, title_append: str = ""):
+        fig = self._get_plotly_metrics_fig(history, title_append)
+        fig.write_html(save_path)
+
 
 
 

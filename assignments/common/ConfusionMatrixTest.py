@@ -141,10 +141,6 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(asserted, expected)
 
 
-    def test_plot(self):
-        self.confusion_matrix.plot()
-
-
     def test_plotly_plot(self):
         self.confusion_matrix.plotly_plot()
 
