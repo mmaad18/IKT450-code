@@ -151,7 +151,7 @@ def save_metadata(run_id: str, batch_size: int, epochs: int, optimizer: Optimize
     print(f"Metadata saved to: {metadata_path}")
 
 
-def save_commentary(run_id: str, network_structure: str) -> None:
+def save_commentary(run_id: str, network_structure: str, training_transform: str) -> None:
     comment_path = logs_path(run_id) / "comment.md"
     comment_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -168,6 +168,9 @@ def save_commentary(run_id: str, network_structure: str) -> None:
 
 ### Network Structure
 {network_structure}
+
+### Training Transform
+{training_transform}
 
     """
 

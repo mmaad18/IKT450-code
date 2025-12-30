@@ -16,7 +16,7 @@ def get_base_transform() -> v2.Compose:
 
 def get_train_transform() -> v2.Compose:
     return v2.Compose([
-        v2.RandomCrop((96, 96)),
+        v2.RandomResizedCrop((96, 96), scale=(0.7, 1.0), ratio=(0.8, 1.2)),
         v2.RandomHorizontalFlip(0.5),
         v2.RandomRotation(degrees=15),
         v2.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.03),

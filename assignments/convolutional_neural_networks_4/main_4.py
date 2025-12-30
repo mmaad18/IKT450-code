@@ -131,7 +131,7 @@ def main():
 
     print_time(start, "Created data loaders")
 
-    epochs = 300
+    epochs = 150
 
     loss_fn = nn.CrossEntropyLoss()
     #optimizer = torch.optim.SGD(model.parameters(), lr=1e-2, momentum=0.9, weight_decay=1e-2, nesterov=True)
@@ -147,7 +147,7 @@ def main():
     #scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs // 4, eta_min=1e-6)
 
     save_metadata(run_id, batch_size, epochs, optimizer, scheduler)
-    save_commentary(run_id, model.__str__())
+    save_commentary(run_id, model.__str__(), get_train_transform().__str__())
     print_time(start, "Created optimizer and scheduler")
 
     # METRICS
@@ -205,8 +205,8 @@ def main():
     plot_list(avg_ces, "Cross-Entropy", ", Validation", plot_path / "cross_entropy_validation.png")
 
     confusion_matrix.save_plotly_metrics(confusion_matrix_metrics, plot_path / "plotly_metrics.html")
-    confusion_matrix.save_plotly(plot_path / "confusion_matrix.html")
     confusion_matrix_aggregate.save_plotly_metrics(confusion_matrix_aggregate_metrics, plot_path / "plotly_metrics_aggregate.html", "Aggregate")
+    confusion_matrix.save_plotly(plot_path / "confusion_matrix.html", " - Training")
     confusion_matrix_aggregate.save_plotly(plot_path / "confusion_matrix_aggregate.html", " - Aggregate")
     confusion_matrix_test.save_plotly(plot_path / "confusion_matrix_test.html", " - Test")
 

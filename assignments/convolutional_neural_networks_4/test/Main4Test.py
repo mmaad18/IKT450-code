@@ -3,6 +3,7 @@ import unittest
 from collections import Counter
 
 import torch
+from PIL import Image
 from torch.utils.data import DataLoader
 from torchvision.io import decode_image
 from torchvision.transforms import v2
@@ -10,11 +11,13 @@ from torchvision.transforms import v2
 import numpy as np
 
 from assignments.convolutional_neural_networks_4.Food11Dataset import Food11Dataset
+from assignments.convolutional_neural_networks_4.networks.VggNet import VggNet
+from assignments.convolutional_neural_networks_4.util_4 import get_test_transform, get_train_transform
 from project.main_project_utils import images_size, path_to_fish_id, images_size_by_class, crop_black_borders
 
 from matplotlib import pyplot as plt
 
-from utils import logs_path, load_plotly_webbrowser
+from utils import logs_path, load_plotly_webbrowser, load_device, load_model
 
 
 class Main4Test(unittest.TestCase):
@@ -165,9 +168,9 @@ class Main4Test(unittest.TestCase):
         os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
         file_paths = [
-            os.path.join(self.training_root_path, "Bread\\0.jpg"),
+            os.path.join(self.root_path, "validation\\Bread\\3.jpg"),
             os.path.join(self.training_root_path, "Dairy product\\0.jpg"),
-            os.path.join(self.training_root_path, "Dessert\\0.jpg"),
+            os.path.join(self.root_path, "validation\\Dessert\\24.jpg"),
             os.path.join(self.training_root_path, "Egg\\0.jpg"),
             os.path.join(self.training_root_path, "Fried food\\0.jpg"),
             os.path.join(self.training_root_path, "Meat\\0.jpg"),
@@ -180,21 +183,44 @@ class Main4Test(unittest.TestCase):
 
         file_path = file_paths[0]
 
+        # transform = v2.Compose([
+        #     v2.ToImage(),
+        #     v2.Resize((96, 96)),
+        #     v2.ToDtype(torch.float32, scale=True),
+        #     v2.Normalize(
+        #         mean=[0.5607, 0.4520, 0.3385],
+        #         std=[0.2598, 0.2625, 0.2692],
+        #     ),
+        # ])
+
         transform = v2.Compose([
             v2.ToDtype(torch.float32, scale=True),
-            v2.RandomResizedCrop(size=96, scale=(0.8, 1.0), ratio=(0.8, 1.2)),
-            v2.RandomHorizontalFlip(p=0.5),
-            #v2.RandomVerticalFlip(p=0.5),
-            v2.RandomErasing(p=0.99, scale=(0.02, 0.15), ratio=(0.3, 3.3)),
+            v2.RandomResizedCrop((96, 96)),
+            v2.RandomHorizontalFlip(0.5),
             v2.RandomRotation(degrees=15),
-            v2.RandomErasing(p=0.99, scale=(0.02, 0.15), ratio=(0.3, 3.3)),
             v2.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.03),
-            #v2.RandomChoice([
-            #    v2.GaussianNoise(mean=0.0, sigma=0.05),
-            #    v2.GaussianBlur(kernel_size=(5, 5), sigma=(0.1, 1.0))
-            #]),
-            v2.Normalize(mean=[0.5607, 0.4520, 0.3385], std=[0.2598, 0.2625, 0.2692])
+            v2.RandomErasing(p=0.15, scale=(0.02, 0.15), ratio=(0.3, 3.3)),
+            v2.Normalize(
+                mean=[0.5607, 0.4520, 0.3385],
+                std=[0.2598, 0.2625, 0.2692],
+            ),
         ])
+
+        # transform = v2.Compose([
+        #     v2.ToDtype(torch.float32, scale=True),
+        #     v2.RandomResizedCrop(size=96, scale=(0.8, 1.0), ratio=(0.8, 1.2)),
+        #     v2.RandomHorizontalFlip(p=0.5),
+        #     #v2.RandomVerticalFlip(p=0.5),
+        #     v2.RandomErasing(p=0.99, scale=(0.02, 0.15), ratio=(0.3, 3.3)),
+        #     v2.RandomRotation(degrees=15),
+        #     v2.RandomErasing(p=0.99, scale=(0.02, 0.15), ratio=(0.3, 3.3)),
+        #     v2.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.03),
+        #     #v2.RandomChoice([
+        #     #    v2.GaussianNoise(mean=0.0, sigma=0.05),
+        #     #    v2.GaussianBlur(kernel_size=(5, 5), sigma=(0.1, 1.0))
+        #     #]),
+        #     v2.Normalize(mean=[0.5607, 0.4520, 0.3385], std=[0.2598, 0.2625, 0.2692])
+        # ])
 
         image = decode_image(file_path)
         print(f"{type(image) = }, {image.dtype = }, {image.shape = }")
@@ -251,8 +277,13 @@ class Main4Test(unittest.TestCase):
         print(f"Std: {std}")
 
 
+    def test_print_transform_info(self):
+        transform = get_train_transform()
+        print(transform)
+
+
     def test_load_plotly_to_webbrowser(self):
-        run_path = logs_path("A4_Vgg_251229_201858")
+        run_path = logs_path("A4_Vgg_251230_032441")
 
         path_list = [
             run_path / "confusion_matrix.html",
@@ -264,6 +295,40 @@ class Main4Test(unittest.TestCase):
 
         for path in path_list:
             load_plotly_webbrowser(path)
+
+
+    def test_load_model(self):
+        category_list = [
+            'Bread', 'Dairy product', 'Dessert', 'Egg', 'Fried food',
+            'Meat', 'Noodles-Pasta', 'Rice', 'Seafood', 'Soup', 'Vegetable-Fruit'
+        ]
+
+        run_id = "A4_Vgg_251230_032441"
+        image_path = os.path.join(self.root_path, f"evaluation\\{category_list[0]}\\3.jpg")
+        image = Image.open(image_path).convert("RGB")
+        transform = get_test_transform()
+        x = transform(image)
+        x = x.unsqueeze(0)
+
+        device = load_device()
+        model = VggNet(device)
+        model = load_model(run_id, model, device)
+        model.eval()
+
+        x = x.to(device)
+
+        with torch.no_grad():
+            logits = model(x)
+            probs = torch.softmax(logits, dim=1)
+            pred_idx = probs.argmax(dim=1).item()
+
+        labels = [
+            'Bread', 'Dairy product', 'Dessert', 'Egg', 'Fried food',
+            'Meat', 'Noodles-Pasta', 'Rice', 'Seafood', 'Soup', 'Vegetable-Fruit'
+        ]
+
+        print("Predicted class:", labels[pred_idx])
+        print("Confidence:", probs[0, pred_idx].item())
 
 
 
