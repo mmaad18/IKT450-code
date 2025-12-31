@@ -14,6 +14,7 @@ from assignments.common.ConfusionMatrix import ConfusionMatrix
 from assignments.convolutional_neural_networks_4.Food11Dataset import Food11Dataset
 from assignments.convolutional_neural_networks_4.networks.AlexNet import AlexNet
 from assignments.convolutional_neural_networks_4.networks.LeNet import LeNet
+from assignments.convolutional_neural_networks_4.networks.ResNet import ResNet
 from assignments.convolutional_neural_networks_4.networks.VggNet import VggNet
 from assignments.convolutional_neural_networks_4.util_4 import get_train_transform, get_test_transform, \
     get_base_transform, save_metrics
@@ -40,7 +41,7 @@ def train_loop(
         loss = loss_fn(Y, T)
 
         # Backpropagation
-        optimizer.zero_grad() # Reset gradients to prevent accumulation
+        optimizer.zero_grad(set_to_none=True) # Reset gradients to prevent accumulation
         loss.backward()
         optimizer.step()
 
@@ -72,7 +73,7 @@ def test_loop(
             T = T.to(device, non_blocking=True).long()
 
             logits  = model(X)
-            pred = logits .argmax(dim=1)
+            pred = logits.argmax(dim=1)
 
             ce = loss_fn(logits, T)
             ce_sum += float(ce.item()) * T.size(0)
@@ -96,7 +97,7 @@ def main():
     device: torch.device = load_device()
     print(f"Using {device} device")
 
-    model = VggNet(device)
+    model = ResNet(device)
     print(model)
 
     print_time(start, "Loaded and compiled network")

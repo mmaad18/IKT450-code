@@ -47,7 +47,7 @@ class LeNet(nn.Module):
     def _initialize_weights(self):
         for layer in self.network_stack:
             if isinstance(layer, nn.Linear):
-                torch.nn.init.kaiming_normal_(layer.weight, nonlinearity='relu')
-                torch.nn.init.zeros_(layer.bias)
+                nn.init.kaiming_normal_(layer.weight, nonlinearity='relu')
+                nn.init.zeros_(layer.bias)
 
 

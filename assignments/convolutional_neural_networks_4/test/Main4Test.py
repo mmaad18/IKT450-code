@@ -283,7 +283,7 @@ class Main4Test(unittest.TestCase):
 
 
     def test_load_plotly_to_webbrowser(self):
-        run_path = logs_path("A4_Vgg_251230_032441")
+        run_path = logs_path("A4_Vgg_251231_022333")
 
         path_list = [
             run_path / "confusion_matrix.html",
@@ -303,7 +303,7 @@ class Main4Test(unittest.TestCase):
             'Meat', 'Noodles-Pasta', 'Rice', 'Seafood', 'Soup', 'Vegetable-Fruit'
         ]
 
-        run_id = "A4_Vgg_251230_032441"
+        run_id = "A4_Vgg_251231_022333"
         image_path = os.path.join(self.root_path, f"evaluation\\{category_list[0]}\\3.jpg")
         image = Image.open(image_path).convert("RGB")
         transform = get_test_transform()

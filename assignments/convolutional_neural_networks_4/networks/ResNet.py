@@ -1,77 +1,81 @@
 import torch
 from torch import nn, Tensor
-
-
-def conv3x3(in_channels: int, out_channels: int, stride: int = 1) -> nn.Conv2d:
-    return nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, groups=1, dilation=1, bias=False)
-
-
-def conv1x1(in_channels: int, out_channels: int, stride: int = 1) -> nn.Conv2d:
-    return nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=stride, bias=False)
+from torchvision.models.resnet import conv1x1, conv3x3
 
 
 class BasicBlock(nn.Module):
-    def __init__(self, in_channels: int):
+    def __init__(self, channels: int):
         super().__init__()
 
-        self.conv1 = conv3x3(in_channels, in_channels)
-        self.bn1 = nn.BatchNorm2d(in_channels)
-        self.relu = nn.ReLU(inplace=True)
-        self.conv2 = conv3x3(in_channels, in_channels)
-        self.bn2 = nn.BatchNorm2d(in_channels)
+        self.network_stack = nn.Sequential(
+            conv3x3(channels, channels),
+            nn.BatchNorm2d(channels),
+            nn.ReLU(),
+            conv3x3(channels, channels),
+            nn.BatchNorm2d(channels),
+        )
+        self.relu = nn.ReLU()
 
-    def forward(self, x: Tensor) -> Tensor:
-        shortcut = x
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.relu(self.network_stack(x) + x)
 
-        out = self.conv1(x)
-        out = self.bn1(out)
-        out = self.relu(out)
 
-        out = self.conv2(out)
-        out = self.bn2(out)
+class BottleneckBlock(nn.Module):
+    def __init__(self, in_channels: int, mid_channels: int, stride: int = 1):
+        super().__init__()
+        out_channels = 4 * mid_channels
 
-        out += shortcut
-        out = self.relu(out)
+        self.network_stack = nn.Sequential(
+            conv1x1(in_channels, mid_channels),
+            nn.BatchNorm2d(mid_channels),
+            nn.ReLU(),
+            conv3x3(mid_channels, mid_channels, stride=stride),
+            nn.BatchNorm2d(mid_channels),
+            nn.ReLU(),
+            conv1x1(mid_channels, out_channels),
+            nn.BatchNorm2d(out_channels),
+        )
 
-        return out
+        self.shortcut = nn.Identity()
+        if stride != 1 or in_channels != out_channels:
+            self.shortcut = nn.Sequential(
+                conv1x1(in_channels, out_channels, stride=stride),
+                nn.BatchNorm2d(out_channels),
+            )
+
+        self.relu = nn.ReLU()
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.relu(self.network_stack(x) + self.shortcut(x))
 
 
 class ResizeBlock(nn.Module):
-    def __init__(self, in_channels: int):
+    def __init__(self, in_channels: int, out_channels: int):
         super().__init__()
 
-        out_channels = 2 * in_channels
-
-        self.conv1 = conv3x3(in_channels, out_channels, stride=2)
-        self.bn1 = nn.BatchNorm2d(out_channels)
-        self.relu = nn.ReLU(inplace=True)
-        self.conv2 = conv3x3(out_channels, out_channels)
-        self.bn2 = nn.BatchNorm2d(out_channels)
+        self.network_stack = nn.Sequential(
+            conv3x3(in_channels, out_channels, stride=2),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(),
+            conv3x3(out_channels, out_channels),
+            nn.BatchNorm2d(out_channels),
+        )
 
         self.shortcut = nn.Sequential(
             conv1x1(in_channels, out_channels, stride=2),
-            nn.BatchNorm2d(out_channels)
+            nn.BatchNorm2d(out_channels),
         )
 
-    def forward(self, x: Tensor) -> Tensor:
-        shortcut = self.shortcut(x)
+        self.relu = nn.ReLU()
 
-        out = self.conv1(x)
-        out = self.bn1(out)
-        out = self.relu(out)
-
-        out = self.conv2(out)
-        out = self.bn2(out)
-
-        out += shortcut
-        out = self.relu(out)
-
-        return out
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.relu(self.network_stack(x) + self.shortcut(x))
 
 
 class ResNet(nn.Module):
-    def __init__(self) -> None:
+    def __init__(self, device: torch.device) -> None:
         super().__init__()
+        self.device = device
 
         self.network_stack = nn.Sequential(
             # 96x96x3
@@ -80,39 +84,42 @@ class ResNet(nn.Module):
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
             # 48x48x64
-            BasicBlock(in_channels=64),
-            BasicBlock(in_channels=64),
+            BasicBlock(64),
+            BasicBlock(64),
             # 24x24x128
-            ResizeBlock(in_channels=64),
-            BasicBlock(in_channels=128),
+            ResizeBlock(in_channels=64, out_channels=128),
+            BasicBlock(128),
             # 12x12x256
-            ResizeBlock(in_channels=128),
-            BasicBlock(in_channels=256),
+            ResizeBlock(in_channels=128, out_channels=256),
+            BasicBlock(256),
             # 6x6x512
-            ResizeBlock(in_channels=256),
-            BasicBlock(in_channels=512),
+            ResizeBlock(in_channels=256, out_channels=512),
+            BasicBlock(512),
             nn.AdaptiveAvgPool2d(output_size=(1, 1)),
             nn.Flatten(),
             nn.Linear(512, 11),
-        )
+        ).to(self.device)
 
         self._initialize_weights()
 
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.network_stack(x)
 
 
     def _initialize_weights(self):
-        for layer in self.network_stack:
-            if isinstance(layer, nn.Conv2d):
-                nn.init.kaiming_normal_(layer.weight, mode="fan_out", nonlinearity="relu")
-            elif isinstance(layer, nn.BatchNorm2d):
-                nn.init.constant_(layer.weight, 1)
-                nn.init.constant_(layer.bias, 0)
-            elif isinstance(layer, nn.Linear):
-                torch.nn.init.kaiming_normal_(layer.weight, nonlinearity='relu')
-                torch.nn.init.zeros_(layer.bias)
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
+                if m.bias is not None:
+                    nn.init.zeros_(m.bias)
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.ones_(m.weight)
+                nn.init.zeros_(m.bias)
+            elif isinstance(m, nn.Linear):
+                nn.init.kaiming_normal_(m.weight, nonlinearity="relu")
+                nn.init.zeros_(m.bias)
+
 
 
 
