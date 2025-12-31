@@ -10,9 +10,10 @@ from torchvision.transforms import v2
 
 import numpy as np
 
-from assignments.convolutional_neural_networks_4.Food11Dataset import Food11Dataset
+from assignments.convolutional_neural_networks_4.networks.ResNet import ResNet
 from assignments.convolutional_neural_networks_4.networks.VggNet import VggNet
-from assignments.convolutional_neural_networks_4.util_4 import get_test_transform, get_train_transform
+from assignments.convolutional_neural_networks_4.util_4 import get_test_transform, get_train_transform, \
+    get_base_transform
 from project.main_project_utils import images_size, path_to_fish_id, images_size_by_class, crop_black_borders
 
 from matplotlib import pyplot as plt
@@ -248,42 +249,13 @@ class Main4Test(unittest.TestCase):
         plt.show()
 
 
-    def test_calculate_mean_and_std_dev(self):
-        transform = v2.Compose([
-            v2.ToDtype(torch.float32, scale=True),
-            v2.Resize(size=96),
-            v2.CenterCrop(size=96),
-            v2.ToTensor()
-        ])
-
-        # Load the dataset with minimal preprocessing
-        dataset = Food11Dataset(self.root_path, "training", transform)
-        dataloader = DataLoader(dataset, batch_size=256, shuffle=False)
-
-        # Initialize sums and squared sums
-        mean = torch.zeros(3)
-        std = torch.zeros(3)
-
-        for images, _ in dataloader:
-            # Sum over batch and spatial dimensions (height and width)
-            mean += images.mean(dim=[0, 2, 3])
-            std += images.std(dim=[0, 2, 3])
-
-        # Divide by the number of batches to get mean and std
-        mean /= len(dataloader)
-        std /= len(dataloader)
-
-        print(f"Mean: {mean}")
-        print(f"Std: {std}")
-
-
     def test_print_transform_info(self):
         transform = get_train_transform()
         print(transform)
 
 
     def test_load_plotly_to_webbrowser(self):
-        run_path = logs_path("A4_Vgg_251231_022333")
+        run_path = logs_path("A4_Res_251231_205701")
 
         path_list = [
             run_path / "confusion_matrix.html",
@@ -303,15 +275,15 @@ class Main4Test(unittest.TestCase):
             'Meat', 'Noodles-Pasta', 'Rice', 'Seafood', 'Soup', 'Vegetable-Fruit'
         ]
 
-        run_id = "A4_Vgg_251231_022333"
-        image_path = os.path.join(self.root_path, f"evaluation\\{category_list[0]}\\3.jpg")
+        run_id = "A4_Res_251231_205701"
+        image_path = os.path.join(self.root_path, f"evaluation\\{category_list[0]}\\4.jpg")
         image = Image.open(image_path).convert("RGB")
-        transform = get_test_transform()
+        transform = v2.Compose([get_base_transform(), get_test_transform()])
         x = transform(image)
         x = x.unsqueeze(0)
 
         device = load_device()
-        model = VggNet(device)
+        model = ResNet(device)
         model = load_model(run_id, model, device)
         model.eval()
 
@@ -329,6 +301,10 @@ class Main4Test(unittest.TestCase):
 
         print("Predicted class:", labels[pred_idx])
         print("Confidence:", probs[0, pred_idx].item())
+
+        plt.imshow(image)
+        plt.axis('off')
+        plt.show()
 
 
 

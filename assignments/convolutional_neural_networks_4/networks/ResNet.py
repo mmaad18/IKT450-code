@@ -79,7 +79,7 @@ class ResNet(nn.Module):
 
         self.network_stack = nn.Sequential(
             # 96x96x3
-            nn.Conv2d(in_channels=3, out_channels=64, kernel_size=7, padding=3),
+            nn.Conv2d(in_channels=3, out_channels=64, kernel_size=7, padding=3, bias=False),
             nn.BatchNorm2d(64),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
@@ -97,6 +97,7 @@ class ResNet(nn.Module):
             BasicBlock(512),
             nn.AdaptiveAvgPool2d(output_size=(1, 1)),
             nn.Flatten(),
+            nn.Dropout(0.5),
             nn.Linear(512, 11),
         ).to(self.device)
 

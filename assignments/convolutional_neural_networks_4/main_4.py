@@ -90,7 +90,7 @@ def test_loop(
 
 def main():
     display_info(4)
-    run_id = create_run_id("A4_Vgg")
+    run_id = create_run_id("A4_Res")
 
     start = time.perf_counter()
 
@@ -132,11 +132,11 @@ def main():
 
     print_time(start, "Created data loaders")
 
-    epochs = 150
+    epochs = 250
 
     loss_fn = nn.CrossEntropyLoss()
-    #optimizer = torch.optim.SGD(model.parameters(), lr=1e-2, momentum=0.9, weight_decay=1e-2, nesterov=True)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-3)
+    optimizer = torch.optim.SGD(model.parameters(), lr=1e-2, momentum=0.9, weight_decay=1e-2, nesterov=True)
+    #optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-3)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer,
         mode='min',
