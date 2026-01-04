@@ -1,5 +1,7 @@
 # pyright: reportConstantRedefinition=false, reportMissingTypeStubs=false
 import time
+from pathlib import Path
+
 from tqdm import tqdm
 from typing import cast, Sized
 
@@ -14,12 +16,13 @@ from assignments.common.ConfusionMatrix import ConfusionMatrix
 from assignments.convolutional_neural_networks_4.Food11Dataset import Food11Dataset
 from assignments.convolutional_neural_networks_4.networks.AlexNet import AlexNet
 from assignments.convolutional_neural_networks_4.networks.LeNet import LeNet
-from assignments.convolutional_neural_networks_4.networks.ResNet import ResNet
+from assignments.convolutional_neural_networks_4.networks.ResNet18 import ResNet18
+from assignments.convolutional_neural_networks_4.networks.ResNet34 import ResNet34
 from assignments.convolutional_neural_networks_4.networks.VggNet import VggNet
 from assignments.convolutional_neural_networks_4.util_4 import get_train_transform, get_test_transform, \
     get_base_transform, save_metrics
 from utils import display_info, load_device, print_time, plot_list, display_memory_usage, save_commentary, \
-    create_run_id, save_metadata, save_model, logs_path
+    create_run_id, save_metadata, save_model, logs_path, log_run
 
 
 def train_loop(
@@ -27,7 +30,8 @@ def train_loop(
         model: nn.Module,
         loss_fn: CrossEntropyLoss,
         optimizer: torch.optim.Optimizer,
-        device: torch.device
+        device: torch.device,
+        scheduler = None,
 ) -> float:
     model.train()
     loss_sum = 0.0
@@ -44,6 +48,7 @@ def train_loop(
         optimizer.zero_grad(set_to_none=True) # Reset gradients to prevent accumulation
         loss.backward()
         optimizer.step()
+        #scheduler.step()
 
         loss_sum += loss.item() * T.size(0)
         n_total += T.size(0)
@@ -90,14 +95,13 @@ def test_loop(
 
 def main():
     display_info(4)
-    run_id = create_run_id("A4_Res")
 
     start = time.perf_counter()
 
     device: torch.device = load_device()
     print(f"Using {device} device")
 
-    model = ResNet(device)
+    model = ResNet34(device)
     print(model)
 
     print_time(start, "Loaded and compiled network")
@@ -132,6 +136,7 @@ def main():
 
     print_time(start, "Created data loaders")
 
+    run_id = create_run_id("A4_" + model.short_name())
     epochs = 250
 
     loss_fn = nn.CrossEntropyLoss()
@@ -143,9 +148,16 @@ def main():
         factor=0.5,
         patience=10,
         threshold=1e-2,
+        threshold_mode='rel',
         min_lr=1e-6
     )
     #scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs // 4, eta_min=1e-6)
+    # scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
+    #     optimizer,
+    #     T_0=10,  # epochs before first restart
+    #     T_mult=2,  # increase cycle length
+    #     eta_min=1e-6
+    # )
 
     save_metadata(run_id, batch_size, epochs, optimizer, scheduler)
     save_commentary(run_id, model.__str__(), get_train_transform().__str__())
@@ -164,7 +176,7 @@ def main():
     print_time(start, "Starting training")
 
     for e in range(epochs):
-        train_ce = train_loop(train_loader, model, loss_fn, optimizer, device)
+        train_ce = train_loop(train_loader, model, loss_fn, optimizer, device, scheduler)
         Y_val, Y_pred, avg_ce = test_loop(val_loader, model, loss_fn, device)
 
         # METRICS
@@ -192,10 +204,11 @@ def main():
 
     print_time(start, "Training complete")
 
-    confusion_matrix_test = ConfusionMatrix(len(test_data.labels), test_data.short_labels)
     Y_val, Y_pred, avg_test_ce = test_loop(test_loader, model, loss_fn, device)
-    confusion_matrix_test.update_vector(Y_val, Y_pred, True)
     print("Average test Cross-Entropy:", avg_test_ce)
+
+    confusion_matrix_test = ConfusionMatrix(len(test_data.labels), test_data.short_labels)
+    confusion_matrix_test.update_vector(Y_val, Y_pred, True)
 
     print_time(start, "Test complete")
 
@@ -226,6 +239,7 @@ def main():
         confusion_matrix_test
     )
     save_model(run_id, model)
+    log_run(Path("output/logs") / "runs.csv", run_id, avg_test_ce, start)
 
     print_time(start, "Saved data")
 

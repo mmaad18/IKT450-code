@@ -51,6 +51,10 @@ class VggNet(nn.Module):
         return self.network_stack(x)
 
 
+    def short_name(self) -> str:
+        return "Vgg"
+
+
     def _initialize_weights(self):
         for layer in self.network_stack:
             if isinstance(layer, nn.Linear):

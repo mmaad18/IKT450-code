@@ -44,6 +44,10 @@ class LeNet(nn.Module):
         return self.network_stack(x)
 
 
+    def short_name(self) -> str:
+        return "Le"
+
+
     def _initialize_weights(self):
         for layer in self.network_stack:
             if isinstance(layer, nn.Linear):

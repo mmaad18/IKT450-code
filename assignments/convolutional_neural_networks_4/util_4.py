@@ -6,34 +6,44 @@ from assignments.common.ConfusionMatrix import ConfusionMatrix
 from utils import logs_path
 
 
+base_image_size = (144, 144)
+image_size = (128, 128)
+
+
 def get_base_transform() -> v2.Compose:
     return v2.Compose([
         v2.ToImage(),
-        v2.Resize((112, 112)),
+        v2.Resize(base_image_size),
         v2.ToDtype(torch.float32, scale=True),
+    ])
+
+
+def get_stats_transform() -> v2.Compose:
+    return v2.Compose([
+        v2.Resize(image_size),
     ])
 
 
 def get_train_transform() -> v2.Compose:
     return v2.Compose([
-        v2.RandomResizedCrop((96, 96), scale=(0.7, 1.0), ratio=(0.8, 1.2)),
+        v2.RandomResizedCrop(image_size, scale=(0.7, 1.0), ratio=(0.8, 1.2)),
         v2.RandomHorizontalFlip(0.5),
         v2.RandomRotation(degrees=15),
         v2.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.03),
         v2.RandomErasing(p=0.15, scale=(0.02, 0.15), ratio=(0.3, 3.3)),
         v2.Normalize(
-            mean=[0.5736, 0.4541, 0.3260],
-            std=[0.2609, 0.2643, 0.2714],
+            mean=[0.5548, 0.4508, 0.3435],
+            std=[0.2651, 0.2674, 0.2747],
         ),
     ])
 
 
 def get_test_transform() -> v2.Compose:
     return v2.Compose([
-        v2.Resize((96, 96)),
+        v2.Resize(image_size),
         v2.Normalize(
-            mean=[0.5736, 0.4541, 0.3260],
-            std=[0.2609, 0.2643, 0.2714],
+            mean=[0.5548, 0.4508, 0.3435],
+            std=[0.2651, 0.2674, 0.2747],
         ),
     ])
 

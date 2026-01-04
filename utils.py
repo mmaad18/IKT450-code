@@ -1,4 +1,5 @@
 # pyright: reportUnknownMemberType=false
+import csv
 import json
 import time
 import webbrowser
@@ -205,5 +206,21 @@ def load_model(run_id: str, model: torch.nn.Module, device: torch.device) -> tor
 
 def load_plotly_webbrowser(save_path: Path) -> None:
     webbrowser.open(save_path.resolve().as_uri())
+
+
+def log_run(log_path: Path, run_id: str, test_ce: float, start: float) -> None:
+    log_path = Path(log_path)
+    file_exists = log_path.exists()
+
+    with log_path.open("a", newline="") as f:
+        writer = csv.writer(f)
+        if not file_exists:
+            writer.writerow(["timestamp", "run_id", "test_ce", "elapsed_time"])
+        writer.writerow([
+            datetime.now().isoformat(timespec="seconds"),
+            run_id,
+            f"{test_ce:.6f}",
+            f"{(time.perf_counter() - start):.2f}",
+        ])
 
 
