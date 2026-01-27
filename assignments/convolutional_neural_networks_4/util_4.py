@@ -28,9 +28,9 @@ def get_train_transform() -> v2.Compose:
     return v2.Compose([
         v2.RandomResizedCrop(image_size, scale=(0.7, 1.0), ratio=(0.8, 1.2)),
         v2.RandomHorizontalFlip(0.5),
-        v2.RandomRotation(degrees=15),
+        v2.RandomRotation(degrees=20),
         v2.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.03),
-        v2.RandomErasing(p=0.15, scale=(0.02, 0.15), ratio=(0.3, 3.3)),
+        v2.RandomErasing(p=0.25, scale=(0.05, 0.20), ratio=(0.3, 3.0)),
         v2.Normalize(
             mean=[0.5548, 0.4508, 0.3435],
             std=[0.2651, 0.2674, 0.2747],

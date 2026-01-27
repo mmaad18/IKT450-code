@@ -110,7 +110,7 @@ class Main4Test(unittest.TestCase):
 
 
     def test_load_plotly_to_webbrowser(self):
-        run_path = logs_path("A4_Res18_260103_185826")
+        run_path = logs_path("A4_Res18_260106_021448")
 
         path_list = [
             #run_path / "confusion_matrix.html",
@@ -130,7 +130,7 @@ class Main4Test(unittest.TestCase):
             'Meat', 'Noodles-Pasta', 'Rice', 'Seafood', 'Soup', 'Vegetable-Fruit'
         ]
 
-        run_id = "A4_Res18_260103_185826"
+        run_id = "A4_Res18_260105_024346"
         #image_path = os.path.join(self.root_path, f"evaluation\\{category_list[0]}\\2.jpg")
         image_path = Path("assignments/convolutional_neural_networks_4/test/images/spaghetti_1.png")
         image = Image.open(image_path).convert("RGB")

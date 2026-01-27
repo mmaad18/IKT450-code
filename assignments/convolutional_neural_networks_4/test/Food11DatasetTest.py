@@ -4,6 +4,7 @@ from collections import Counter
 
 import numpy as np
 import torch
+import torchvision
 from matplotlib import pyplot as plt
 from torch.utils.data import DataLoader
 
@@ -189,6 +190,25 @@ class MyTestCase(unittest.TestCase):
 
         print(f"Mean: {mean}")
         print(f"Std: {std}")
+
+
+    def test_loading_multiple_images(self):
+        dataset = Food11Dataset(self.root_path, "training", get_base_transform(), get_train_transform())
+        dataloader = DataLoader(dataset, batch_size=256, shuffle=False)
+
+        images, targets = next(iter(dataloader))
+        grid_images = torchvision.utils.make_grid(images, nrow=8, padding=10)
+
+        mean = [0.5548, 0.4508, 0.3435]
+        std = [0.2651, 0.2674, 0.2747]
+
+        np_image = np.array(grid_images).transpose((1, 2, 0))
+        unnorm_image = np_image * std + mean
+        plt.figure(figsize=(8, 16))
+        plt.imshow(unnorm_image)
+        plt.axis('off')
+        plt.tight_layout()
+        plt.show()
 
 
 if __name__ == '__main__':

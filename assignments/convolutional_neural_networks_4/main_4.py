@@ -101,7 +101,7 @@ def main():
     device: torch.device = load_device()
     print(f"Using {device} device")
 
-    model = ResNet34(device)
+    model = ResNet18(device)
     print(model)
 
     print_time(start, "Loaded and compiled network")
@@ -137,7 +137,7 @@ def main():
     print_time(start, "Created data loaders")
 
     run_id = create_run_id("A4_" + model.short_name())
-    epochs = 250
+    epochs = 200
 
     loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=1e-2, momentum=0.9, weight_decay=1e-2, nesterov=True)
@@ -205,10 +205,12 @@ def main():
     print_time(start, "Training complete")
 
     Y_val, Y_pred, avg_test_ce = test_loop(test_loader, model, loss_fn, device)
-    print("Average test Cross-Entropy:", avg_test_ce)
 
     confusion_matrix_test = ConfusionMatrix(len(test_data.labels), test_data.short_labels)
     confusion_matrix_test.update_vector(Y_val, Y_pred, True)
+
+    print("Average test Cross-Entropy:", avg_test_ce)
+    print("Test accuracy:", confusion_matrix_test.accuracy())
 
     print_time(start, "Test complete")
 
